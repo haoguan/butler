@@ -4,6 +4,8 @@ defmodule Expiration do
 end
 
 defmodule Butler.Classify do
+  use Timex
+
   expirationTiers = %{
     :WEEK_1 => %Expiration{weeks: 1},
     :WEEK_2 => %Expiration{weeks: 2},
@@ -14,7 +16,8 @@ defmodule Butler.Classify do
     :YEAR_1 => %Expiration{years: 1}
   }
 
-  itemExpirations = %{
+  # Module constant, can be used in funcs
+  @itemExpirations %{
     ##############
     ## CLEANING ##
     ##############
@@ -66,4 +69,19 @@ defmodule Butler.Classify do
     :"clarisonic head" => expirationTiers[:MONTH_3],
     :"contact case" => expirationTiers[:MONTH_3]
   }
+
+  @spec expirationDateForItem(String.t) :: DateTime.t | {:error, String.t}
+  def expirationDateForItem(item) do
+    # Using subscript notation will return nil for non-existing key
+    # Using dot notation will throw KeyError instead
+    case @itemExpirations[item] do
+      nil ->
+        IO.puts item <> " could not be found in list"
+        {:error, item}
+      expiration ->
+        Timex.shift(Timex.now(), seconds: expiration.seconds,
+          minutes: expiration.minutes, hours: expiration.hours, days: expiration.days,
+          months: expiration.months, years: expiration.years)
+    end
+  end
 end
