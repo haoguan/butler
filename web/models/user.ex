@@ -1,4 +1,5 @@
 defmodule Butler.User do
+  alias Butler.User
   @derive {Poison.Encoder, only: [:id, :alexa_id_hash]}
 
   use Butler.Web, :model
@@ -6,6 +7,7 @@ defmodule Butler.User do
   schema "users" do
     field :alexa_id, :string, virtual: true
     field :alexa_id_hash, :string
+    has_many :items, Butler.Item
 
     timestamps
   end
@@ -13,8 +15,8 @@ defmodule Butler.User do
   @required_fields ~w(alexa_id)
   @optional_fields ~w()
 
-  def registration_changeset(model, params) do
-    model
+  def registration_changeset(params) do
+    %User{}
     |> cast(params, @required_fields, @optional_fields)
     |> validate_alexa_id
     |> encrypt_alexa_id

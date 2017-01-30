@@ -25,15 +25,14 @@ defmodule Butler.Classify do
     # Tier 1
     :bedsheets => expirationTiers[:MONTH_1],
     :blankets => expirationTiers[:MONTH_1],
-    :"pillow sheets" => expirationTiers[:MONTH_1],
-    :"bath towels" => expirationTiers[:MONTH_1],
-    :"kitchen towels" => expirationTiers[:MONTH_1],
+    :sheets => expirationTiers[:MONTH_1],
+    :towels => expirationTiers[:MONTH_1],
 
     # Tier 2
     :blinds => expirationTiers[:MONTH_2],
     :desk => expirationTiers[:MONTH_2],
     :fridge => expirationTiers[:MONTH_2],
-    :"kitchen table" => expirationTiers[:MONTH_2],
+    :table => expirationTiers[:MONTH_2],
 
     ################
     ## PERISHABLE ##
@@ -51,6 +50,8 @@ defmodule Butler.Classify do
     :cheese => expirationTiers[:WEEK_3],
 
     # Tier 4
+    :ketchup => expirationTiers[:MONTH_1],
+    :mustard => expirationTiers[:MONTH_1],
     :"hoisin sauce" => expirationTiers[:MONTH_1],
     :siracha => expirationTiers[:MONTH_1],
 
@@ -83,5 +84,14 @@ defmodule Butler.Classify do
           minutes: expiration.minutes, hours: expiration.hours, days: expiration.days,
           months: expiration.months, years: expiration.years)
     end
+  end
+
+  def interpret_term(raw_term) do
+    words = String.split(raw_term, " ", trim: true)
+    type = Enum.find(words, nil, fn word ->
+      Map.has_key?(@itemExpirations, word)
+    end)
+    # Remainder of split is modifier
+    %{:type => type, :modifier => String.split(raw_term, type, trim: true)}
   end
 end
