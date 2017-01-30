@@ -24,14 +24,15 @@ defmodule Butler.Item do
   def registration_changeset(params) do
     %Item{}
     |> cast(params, @allowed_fields)
-    |> parse_raw_input(params)
+    |> addTermComponents(params)
     # TODO: Add expiration date to changeset
+    |> addExpirationDate
     |> validate_required(@required_fields)
     |> foreign_key_constraint(:user_id)
     |> unique_constraint(:user_id, name: :items_type_modifier_user_id_index)
   end
 
-  def parse_raw_input(changeset, %{"raw_term" => raw_term}) do
+  def addTermComponents(changeset, %{"raw_term" => raw_term}) do
     interpretation = Classify.interpret_term(raw_term)
     case interpretation do
       %{:type => type, :modifier => modifier} ->
@@ -44,9 +45,25 @@ defmodule Butler.Item do
     end
   end
 
-  # Error case for method
-  def parse_raw_input(_, _) do
-    IO.puts "raw_term not found in params"
+  # Error case
+  def addTermComponents(_, _) do
+    IO.puts "addTermComponents: raw_term not found in params"
+  end
+
+  def addExpirationDate(changeset) do
+    case get_change(changeset, :type) do
+      nil ->
+        IO.puts "addExpirationDate: type cannot be found within changeset"
+        changeset
+      type ->
+        case Classify.expirationDateForItem(type) do
+          {:error, term} ->
+            IO.puts "failure to find expirationDate for " <> term <> "."
+            changeset
+          expiration_date ->
+            put_change(changeset, :expiration_date, expiration_date)
+        end
+    end
   end
 
 end
