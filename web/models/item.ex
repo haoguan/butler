@@ -32,14 +32,16 @@ defmodule Butler.Item do
     interpretation = Classify.interpret_term(raw_term)
     case interpretation do
       %{:type => type, :modifier => modifier} ->
-        put_change(changeset, :type, type)
-        put_change(changeset, :modifier, modifier)
         changeset
+        |> put_change(:type, type)
+        |> put_change(:modifier, modifier)
       _ ->
         IO.puts "interpretation of term failed"
+        changeset
     end
   end
 
+  # Error case for method
   def parse_raw_input(_, _) do
     IO.puts "raw_term not found in params"
   end
