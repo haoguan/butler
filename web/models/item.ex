@@ -10,8 +10,8 @@ defmodule Butler.Item do
   schema "items" do
     field :raw_term, :string, virtual: true
 
-    field :modifier, :string
     field :type, :string
+    field :modifier, :string
     field :expiration_date, :utc_datetime
     belongs_to :user, Butler.User
 
@@ -25,7 +25,10 @@ defmodule Butler.Item do
     %Item{}
     |> cast(params, @allowed_fields)
     |> parse_raw_input(params)
+    # TODO: Add expiration date to changeset
     |> validate_required(@required_fields)
+    |> foreign_key_constraint(:user_id)
+    |> unique_constraint(:user_id, name: :items_type_modifier_user_id_index)
   end
 
   def parse_raw_input(changeset, %{"raw_term" => raw_term}) do
