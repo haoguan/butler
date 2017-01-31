@@ -12,14 +12,15 @@ defmodule Butler.User do
     timestamps
   end
 
-  @required_fields ~w(alexa_id)
-  @optional_fields ~w()
+  @allowed_fields ~w(alexa_id)
+  @required_fields :alexa_id_hash
 
   def registration_changeset(params) do
     %User{}
-    |> cast(params, @required_fields, @optional_fields)
+    |> cast(params, @allowed_fields)
     |> validate_alexa_id
     |> encrypt_alexa_id
+    |> validate_required(@required_fields)
   end
 
   def validate_alexa_id(changeset) do

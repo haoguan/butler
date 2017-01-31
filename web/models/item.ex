@@ -19,13 +19,12 @@ defmodule Butler.Item do
   end
 
   @allowed_fields ~w(raw_term user_id)
-  @required_fields ~w(modifier type expiration_date user_id)
+  @required_fields [:modifier, :type, :expiration_date, :user_id]
 
   def registration_changeset(params) do
     %Item{}
     |> cast(params, @allowed_fields)
     |> addTermComponents(params)
-    # TODO: Add expiration date to changeset
     |> addExpirationDate
     |> validate_required(@required_fields)
     |> foreign_key_constraint(:user_id)
@@ -46,7 +45,7 @@ defmodule Butler.Item do
   end
 
   # Error case
-  def addTermComponents(_, _) do
+  def addTermComponents(_changeset, _params) do
     IO.puts "addTermComponents: raw_term not found in params"
   end
 
