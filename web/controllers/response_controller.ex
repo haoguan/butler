@@ -40,6 +40,7 @@ defmodule Butler.ResponseController do
     |> render(ResponseView, "not_found.json")
   end
 
+  # 422 WITH ERROR(S)
   def changeset_error(conn, changeset) do
     conn
     |> put_status(:unprocessable_entity)
