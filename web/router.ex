@@ -13,12 +13,6 @@ defmodule Butler.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/", Butler do
-    pipe_through :browser # Use the default browser stack
-
-    get "/", PageController, :index
-  end
-
   # Other scopes may use custom stacks.
   scope "/api/v1", Butler.API.V1 do
     pipe_through :api
