@@ -36,6 +36,7 @@ defmodule Butler.Web do
 
       import Butler.Router.Helpers
       import Butler.Gettext
+      alias Butler.ResponseController
     end
   end
 

@@ -26,6 +26,7 @@ defmodule Butler.ConnCase do
       import Ecto.Query
 
       import Butler.Router.Helpers
+      import Butler.TestUtils
 
       # The default endpoint for testing
       @endpoint Butler.Endpoint

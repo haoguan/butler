@@ -20,7 +20,10 @@ defmodule Butler.Router do
   end
 
   # Other scopes may use custom stacks.
-  # scope "/api", Butler do
-  #   pipe_through :api
-  # end
+  scope "/api/v1", Butler.API.V1 do
+    pipe_through :api
+
+    resources "/users", UserController, only: [:index, :show, :create]
+    resources "/items", ItemController, only: [:index, :show, :create]
+  end
 end
