@@ -25,7 +25,7 @@ defmodule Butler.User do
 
   def validate_alexa_id(changeset) do
     changeset
-    |> validate_length(:alexa_id, min: 1, max: 255)
+    |> validate_length(:alexa_id, min: 2, max: 255)
   end
 
   def encrypt_alexa_id(changeset) do

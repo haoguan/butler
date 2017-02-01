@@ -34,6 +34,15 @@ defmodule Butler.UserControllerTest do
       "field" => "alexa_id"})
   end
 
+  test "POST api/v1/users with zero length alexa_id" do
+    tiny_alexa_id = "h"
+
+    conn = post build_conn(), "api/v1/users", [alexa_id: tiny_alexa_id]
+    assert %{"errors" => errors} = json_response(conn, 422)
+    assert Enum.member?(errors, %{"detail" => "should be at least 2 character(s)",
+      "field" => "alexa_id"})
+  end
+
   test "GET api/v1/users/id", context do
     %{user1: mock_user} = context[:users]
     conn = get build_conn(), Enum.join(["api/v1/users/", mock_user.id]), nil
