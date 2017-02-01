@@ -31,6 +31,10 @@ defmodule Butler.Item do
     |> unique_constraint(:user_id, name: :items_type_modifier_user_id_index)
   end
 
+  ###########
+  # HELPERS #
+  ###########
+
   def addTermComponents(changeset, %{"raw_term" => raw_term}) do
     interpretation = Classify.interpret_term(raw_term)
     case interpretation do
@@ -63,6 +67,18 @@ defmodule Butler.Item do
             put_change(changeset, :expiration_date, expiration_date)
         end
     end
+  end
+
+  ###########
+  # QUERIES #
+  ###########
+
+  # Items scoped to user_id
+  def query_user_items(user_id) do
+    from i in Item,
+    join: u in User, on: i.user_id == u.id,
+    where: i.user_id == ^user_id,
+    select: i
   end
 
 end
