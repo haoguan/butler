@@ -10,11 +10,12 @@ defmodule Butler.API.V1.UserController do
   def show(conn, %{"id" => id}) do
     case user = Repo.get(User, id) do
       nil ->
-        ResponseController.not_found(conn)
+        ResponseController.not_found(conn,
+          %{description: Enum.join("User: ", id) <> " not found"})
       _ ->
         ResponseController.render_data(conn, user)
     end
-end
+  end
 
   def create(conn, user_params) do
     changeset = User.registration_changeset(user_params)
