@@ -19,7 +19,7 @@ defmodule Butler.ItemController do
     case user = Repo.get(Item, id) do
       nil ->
         ResponseController.not_found(conn,
-          %{description: Enum.join("Item: ", id) <> " not found"})
+          %{description: Enum.join(["Item: ", id]) <> " not found"})
       _ ->
         ResponseController.render_data(conn, user)
     end
