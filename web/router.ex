@@ -17,7 +17,9 @@ defmodule Butler.Router do
   scope "/api/v1", Butler.API.V1 do
     pipe_through :api
 
-    resources "/users", UserController, only: [:index, :show, :create]
-    resources "/items", ItemController, only: [:index, :show, :create]
+    resources "/users", UserController, only: [:index, :show, :create] do
+      resources "/items", ItemController, only: [:index, :show, :create]
+    end
+    resources "/items", ItemController, only: [:index]
   end
 end
