@@ -5,7 +5,7 @@ defmodule Butler.API.V1.ItemController do
   # GET /users/user_id/items
   def index(conn, %{"user_id" => user_id}) do
     scoped_items = Item.query_user_items(user_id)
-    ResponseController.render_data(conn, scoped_items)
+    ResponseController.render_data(conn, Repo.all(scoped_items))
   end
 
   # GET /items (Debug)

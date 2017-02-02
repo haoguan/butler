@@ -1,5 +1,6 @@
 defmodule Butler.Item do
   alias Butler.Item
+  alias Butler.User
   @derive {Poison.Encoder, only: [:id, :type, :modifier, :expiration_date]}
 
   use Butler.Web, :model

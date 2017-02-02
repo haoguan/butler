@@ -57,11 +57,12 @@ defmodule Butler.UserControllerTest do
     %{user1: mock_user, user2: mock_user_2} = context[:users]
     conn = get build_conn(), "api/v1/users", nil
     %{"description" => description, "status" => status,
-      "data" => [%{"id" => index_id_1}, %{"id" => index_id_2}]} = json_response(conn, 200)
+      "data" => data = [%{"id" => index_id_1}, %{"id" => index_id_2}]} = json_response(conn, 200)
     assert status == 200
     assert description == "Operation successfully completed"
     # Assert response data user ids contains expected mock user ids
     assert Enum.member?([index_id_1, index_id_2], mock_user.id)
     assert Enum.member?([index_id_1, index_id_2], mock_user_2.id)
+    assert Enum.count(data) == 2
   end
 end
