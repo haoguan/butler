@@ -1,4 +1,4 @@
-defmodule Butler.ItemController do
+defmodule Butler.API.V1.ItemController do
   use Butler.Web, :controller
   alias Butler.Item
 

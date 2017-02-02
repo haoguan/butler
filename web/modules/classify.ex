@@ -71,27 +71,35 @@ defmodule Butler.Classify do
     :"contact case" => expirationTiers[:MONTH_3]
   }
 
-  @spec expirationDateForItem(String.t) :: DateTime.t | {:error, String.t}
-  def expirationDateForItem(item) do
+  # @spec expirationDateForItem(String.t, DateTime.t) :: DateTime.t | {:error, String.t}
+  def expirationDateForItem(item, start_date \\ Timex.now()) do
+    item_atom = String.to_atom(item)
     # Using subscript notation will return nil for non-existing key
     # Using dot notation will throw KeyError instead
-    case @itemExpirations[item] do
+    case @itemExpirations[item_atom] do
       nil ->
         IO.puts item <> " could not be found in list"
         {:error, item}
       expiration ->
-        Timex.shift(Timex.now(), seconds: expiration.seconds,
+        Timex.shift(start_date, seconds: expiration.seconds,
           minutes: expiration.minutes, hours: expiration.hours, days: expiration.days,
           months: expiration.months, years: expiration.years)
     end
   end
 
   def interpret_term(raw_term) do
-    words = String.split(raw_term, " ", trim: true)
-    type = Enum.find(words, nil, fn word ->
-      Map.has_key?(@itemExpirations, word)
+    # Find index of the type in words list
+    words = raw_term |> String.split(" ", trim: true)
+    type_index = words |> Enum.find_index(fn word ->
+      Map.has_key?(@itemExpirations, String.to_atom(word))
     end)
-    # Remainder of split is modifier
-    %{:type => type, :modifier => String.split(raw_term, type, trim: true)}
+
+    # Skip error check because index already verified
+    {:ok, type} = words |> Enum.fetch(type_index)
+
+    # TODO: Handle complex expressions like "Angelina's bedsheets in the room"
+    # Ignore words after the type has been identified
+    modifier = words |> Enum.take(type_index) |> Enum.join(" ")
+    %{:type => type, :modifier => modifier}
   end
 end
