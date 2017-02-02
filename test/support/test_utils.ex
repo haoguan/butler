@@ -11,4 +11,12 @@ defmodule Butler.TestUtils do
     User.registration_changeset(%{:alexa_id => alexa_id})
     |> Repo.insert!
   end
+
+  def convert_ISO_to_Timex(datetime) do
+    case Timex.parse(datetime, "{ISO:Extended}") do
+      {:ok, d} ->
+        {:ok, Timex.to_datetime(d)}
+      {:error, _} -> :error
+    end
+  end
 end
