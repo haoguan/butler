@@ -17,6 +17,7 @@ defmodule Butler.Classify do
   }
 
   # Module constant, can be used in funcs
+  # TODO: Add support for multi sized item keys!
   @itemExpirations %{
     ##############
     ## CLEANING ##
@@ -43,7 +44,7 @@ defmodule Butler.Classify do
 
     # Tier 2
     :milk => expirationTiers[:WEEK_2],
-    :"pasta sauce" => expirationTiers[:WEEK_2],
+    # :"pasta sauce" => expirationTiers[:WEEK_2],
 
     # Tier 3
     :butter => expirationTiers[:WEEK_3],
@@ -52,7 +53,7 @@ defmodule Butler.Classify do
     # Tier 4
     :ketchup => expirationTiers[:MONTH_1],
     :mustard => expirationTiers[:MONTH_1],
-    :"hoisin sauce" => expirationTiers[:MONTH_1],
+    # :"hoisin sauce" => expirationTiers[:MONTH_1],
     :siracha => expirationTiers[:MONTH_1],
 
     #################
@@ -65,10 +66,10 @@ defmodule Butler.Classify do
 
     # Tier 2
     :toothbrush => expirationTiers[:MONTH_3],
-    :"toothbrush head" => expirationTiers[:MONTH_3],
+    # :"toothbrush head" => expirationTiers[:MONTH_3],
     :clarisonic => expirationTiers[:MONTH_3],
-    :"clarisonic head" => expirationTiers[:MONTH_3],
-    :"contact case" => expirationTiers[:MONTH_3]
+    # :"clarisonic head" => expirationTiers[:MONTH_3],
+    # :"contact case" => expirationTiers[:MONTH_3]
   }
 
   # @spec expirationDateForItem(String.t, DateTime.t) :: DateTime.t | {:error, String.t}
