@@ -2,22 +2,8 @@ defmodule Butler.ItemControllerTest do
   use Butler.ConnCase
   use Timex
 
-  setup do
-    # User with one item
-    user = insert_mock_user("amzn1.test.user1.id")
-    item1 = insert_mock_item(user.id, "sweet ketchup from safeway")
-
-    # User with a few items
-    user2 = insert_mock_user("amzn1.test.user2.id")
-    # TODO: Add test for capital letters!
-    item2 = insert_mock_item(user2.id, "jack cheese from trader's joe")
-    item3 = insert_mock_item(user2.id, "rib leftovers")
-
-    {:ok, users: %{user1: user, user2: user2}, items: %{item1: item1, item2: item2, item3: item3}}
-  end
-
-  test "POST api/v1/users/user_id/items", context do
-    %{user1: mock_user} = context[:users]
+  test "POST api/v1/users/user_id/items" do
+    mock_user = insert_mock_user("amzn1.test.setupuser.id")
     conn = post build_conn(), Enum.join(["api/v1/users/", mock_user.id]) <> "/items", [raw_term: "kitchen towels"]
     %{"description" => description, "status" => status,
       "data" => %{"id" => _, "type" => type, "modifier" => modifier,
@@ -33,8 +19,8 @@ defmodule Butler.ItemControllerTest do
     assert Timex.diff(Timex.now(), expiration, :months) == -1
   end
 
-  test "POST api/v1/users/user_id/items with trailing words", context do
-    %{user1: mock_user} = context[:users]
+  test "POST api/v1/users/user_id/items with trailing words" do
+    mock_user = insert_mock_user("amzn1.test.setupuser.id")
     conn = post build_conn(), Enum.join(["api/v1/users/", mock_user.id]) <> "/items", [raw_term: "Angelina's clarisonic for shower"]
     %{"description" => description, "status" => status,
       "data" => %{"id" => _, "type" => type, "modifier" => modifier,
@@ -50,7 +36,8 @@ defmodule Butler.ItemControllerTest do
     assert Timex.diff(Timex.now(), expiration, :months) == -3
   end
 
-  test "GET api/v1/users/user_id/items", context do
+  test "GET api/v1/users/user_id/items" do
+    {:ok, context} = setup_users_with_items
     %{user1: _, user2: experienced_user} = context[:users]
     %{item1: _, item2: experienced_item_1, item3: experienced_item_2} = context[:items]
 
@@ -64,5 +51,6 @@ defmodule Butler.ItemControllerTest do
     assert Enum.member?([item_id_1, item_id_2], experienced_item_2.id)
     assert Enum.count(data) == 2
   end
+
 
 end

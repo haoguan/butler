@@ -18,6 +18,19 @@ defmodule Butler.TestUtils do
     |> Repo.insert!
   end
 
+  def setup_users_with_items do
+    # User with one item
+    user = insert_mock_user("amzn1.test.user1.id")
+    item1 = insert_mock_item(user.id, "sweet ketchup from safeway")
+
+    # User with a few items
+    user2 = insert_mock_user("amzn1.test.user2.id")
+    # TODO: Add test for capital letters!
+    item2 = insert_mock_item(user2.id, "jack cheese from trader's joe")
+    item3 = insert_mock_item(user2.id, "rib leftovers")
+    {:ok, users: %{user1: user, user2: user2}, items: %{item1: item1, item2: item2, item3: item3}}
+  end
+
   def convert_ISO_to_Timex(datetime) do
     case Timex.parse(datetime, "{ISO:Extended}") do
       {:ok, d} ->
