@@ -12,6 +12,7 @@ defmodule Butler.Classify do
     :WEEK_3 => %Expiration{weeks: 3},
     :MONTH_1 => %Expiration{months: 1},
     :MONTH_2 => %Expiration{months: 2},
+    :MONTH_3 => %Expiration{months: 3},
     :MONTH_6 => %Expiration{months: 6},
     :YEAR_1 => %Expiration{years: 1}
   }
@@ -67,7 +68,7 @@ defmodule Butler.Classify do
     # Tier 2
     :toothbrush => expirationTiers[:MONTH_3],
     # :"toothbrush head" => expirationTiers[:MONTH_3],
-    :clarisonic => expirationTiers[:MONTH_3],
+    :clarisonic => expirationTiers[:MONTH_3]
     # :"clarisonic head" => expirationTiers[:MONTH_3],
     # :"contact case" => expirationTiers[:MONTH_3]
   }
