@@ -1,12 +1,6 @@
 defmodule Butler.UserControllerTest do
   use Butler.ConnCase
 
-  setup do
-    user = insert_mock_user("amzn1.test.user1.id")
-    user2 = insert_mock_user("amzn1.test.user2.id")
-    {:ok, users: %{user1: user, user2: user2}}
-  end
-
   test "POST api/v1/users" do
     conn = post build_conn(), "api/v1/users", [alexa_id: "amzn1.test.postuser.id"]
     %{"description" => description, "status" => status,
@@ -43,8 +37,8 @@ defmodule Butler.UserControllerTest do
       "field" => "alexa_id"})
   end
 
-  test "GET api/v1/users/id", context do
-    %{user1: mock_user} = context[:users]
+  test "GET api/v1/users/id" do
+    mock_user = insert_mock_user("amzn1.test.user1.id")
     conn = get build_conn(), Enum.join(["api/v1/users/", mock_user.id]), nil
     %{"description" => description, "status" => status,
       "data" => %{"id" => get_id, "alexa_id_hash" => _}} = json_response(conn, 200)
@@ -53,8 +47,9 @@ defmodule Butler.UserControllerTest do
     assert mock_user.id == get_id
   end
 
-  test "GET api/v1/users", context do
-    %{user1: mock_user, user2: mock_user_2} = context[:users]
+  test "GET api/v1/users" do
+    mock_user = insert_mock_user("amzn1.test.user1.id")
+    mock_user_2 = insert_mock_user("amzn1.test.user2.id")
     conn = get build_conn(), "api/v1/users", nil
     %{"description" => description, "status" => status,
       "data" => data = [%{"id" => index_id_1}, %{"id" => index_id_2}]} = json_response(conn, 200)
