@@ -19,6 +19,24 @@ defmodule Butler.ItemControllerTest do
     assert Timex.diff(Timex.now(), expiration, :months) == -1
   end
 
+  test "POST api/v1/items?alexa_id=&item= with no modifiers" do
+    mock_user = insert_mock_user("amzn1.test.setupuser.id")
+    conn = post build_conn(), "api/v1/items/", [alexa_id: mock_user.alexa_id, item: "bedsheets"]
+    %{"description" => description, "status" => status,
+      "data" => %{"id" => _, "type" => type, "modifier" => modifier,
+      "expiration_date" => expiration_date}} = json_response(conn, 201)
+
+    {:ok, expiration} = convert_ISO_to_Timex(expiration_date)
+    assert status == 201
+    assert description == "Item successfully created"
+    assert type == "bedsheets"
+    # TODO: Should this be empty string or nil if modifier doesn't exist?
+    assert modifier == ""
+
+    # negative if first datetime occurs before second
+    assert Timex.diff(Timex.now(), expiration, :months) == -1
+  end
+
   test "POST api/v1/items?alexa_id=&item= with trailing words" do
     mock_user = insert_mock_user("amzn1.test.setupuser.id")
     conn = post build_conn(), "api/v1/items/", [alexa_id: mock_user.alexa_id, item: "Angelina's clarisonic for shower"]

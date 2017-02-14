@@ -14,13 +14,13 @@ defmodule Butler.API.V1.ItemController do
     ResponseController.render_data(conn, items)
   end
 
-  # GET /items/id
+  # GET /items/id (Debug)
   def show(conn, %{"id" => id}) do
-    case user = Repo.get(Item, id) do
+    case Repo.get(Item, id) do
       nil ->
         ResponseController.not_found(conn,
           %{description: Enum.join(["Item: ", id]) <> " not found"})
-      _ ->
+      user ->
         ResponseController.render_data(conn, user)
     end
   end

@@ -21,7 +21,7 @@ defmodule Butler.Item do
   end
 
   @allowed_fields ~w(item alexa_id)
-  @required_fields [:modifier, :type, :expiration_date, :user_id]
+  @required_fields [:type, :expiration_date, :user_id]
 
   def registration_changeset(params) do
     %Item{}
