@@ -9,7 +9,8 @@ defmodule Butler.Item do
   # TODO: Support items with generic modifiers
   # e.g. kitchen towel, Angelina's toothbrush
   schema "items" do
-    field :raw_term, :string, virtual: true
+    field :alexa_id, :string, virtual: true
+    field :item, :string, virtual: true
 
     field :type, :string
     field :modifier, :string
@@ -19,12 +20,13 @@ defmodule Butler.Item do
     timestamps
   end
 
-  @allowed_fields ~w(raw_term user_id)
+  @allowed_fields ~w(item alexa_id)
   @required_fields [:modifier, :type, :expiration_date, :user_id]
 
   def registration_changeset(params) do
     %Item{}
     |> cast(params, @allowed_fields)
+    |> convertAlexaIdToUserId(params)
     |> addTermComponents(params)
     |> addExpirationDate
     |> validate_required(@required_fields)
@@ -36,8 +38,22 @@ defmodule Butler.Item do
   # HELPERS #
   ###########
 
-  def addTermComponents(changeset, %{"raw_term" => raw_term}) do
-    interpretation = Classify.interpret_term(raw_term)
+  def convertAlexaIdToUserId(changeset, %{"alexa_id" => alexa_id}) do
+    # Should only be one
+    case Repo.one(User.query_matching_user(alexa_id)) do
+      nil ->
+        IO.puts "failed to find a user with alexa_id"
+        changeset
+      user ->
+        changeset
+        |> put_change(:user_id, user.id)
+        |> delete_change(:alexa_id)
+    end
+
+  end
+
+  def addTermComponents(changeset, %{"item" => item}) do
+    interpretation = Classify.interpret_term(item)
     case interpretation do
       %{:type => type, :modifier => modifier} ->
         changeset
@@ -74,11 +90,11 @@ defmodule Butler.Item do
   # QUERIES #
   ###########
 
-  # Items scoped to user_id
-  def query_user_items(user_id) do
+  # Items scoped to alexa_id
+  def query_user_items(alexa_id) do
     from i in Item,
     join: u in User, on: i.user_id == u.id,
-    where: i.user_id == ^user_id,
+    where: u.alexa_id == ^alexa_id,
     select: i
   end
 

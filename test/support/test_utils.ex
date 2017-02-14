@@ -13,21 +13,21 @@ defmodule Butler.TestUtils do
     |> Repo.insert!
   end
 
-  def insert_mock_item(user_id, raw_term) do
-    Item.registration_changeset(%{"user_id" => user_id, "raw_term" => raw_term})
+  def insert_mock_item(alexa_id, item) do
+    Item.registration_changeset(%{"alexa_id" => alexa_id, "item" => item})
     |> Repo.insert!
   end
 
   def setup_users_with_items do
     # User with one item
     user = insert_mock_user("amzn1.test.user1.id")
-    item1 = insert_mock_item(user.id, "sweet ketchup from safeway")
+    item1 = insert_mock_item(user.alexa_id, "sweet ketchup from safeway")
 
     # User with a few items
     user2 = insert_mock_user("amzn1.test.user2.id")
     # TODO: Add test for capital letters!
-    item2 = insert_mock_item(user2.id, "jack cheese from trader's joe")
-    item3 = insert_mock_item(user2.id, "rib leftovers")
+    item2 = insert_mock_item(user2.alexa_id, "jack cheese from trader's joe")
+    item3 = insert_mock_item(user2.alexa_id, "rib leftovers")
     {:ok, users: %{user1: user, user2: user2}, items: %{item1: item1, item2: item2, item3: item3}}
   end
 

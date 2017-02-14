@@ -3,7 +3,7 @@ defmodule Butler.Repo.Migrations.CreateUser do
 
   def change do
     create table(:users) do
-      add :alexa_id_hash, :string
+      add :alexa_id, :string, null: false
 
       timestamps
     end

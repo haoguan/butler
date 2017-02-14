@@ -2,9 +2,9 @@ defmodule Butler.API.V1.ItemController do
   use Butler.Web, :controller
   alias Butler.Item
 
-  # GET /users/user_id/items
-  def index(conn, %{"user_id" => user_id}) do
-    scoped_items = Item.query_user_items(user_id)
+  # GET /items scoped to user
+  def index(conn, %{"alexa_id" => alexa_id}) do
+    scoped_items = Item.query_user_items(alexa_id)
     ResponseController.render_data(conn, Repo.all(scoped_items))
   end
 
@@ -14,8 +14,8 @@ defmodule Butler.API.V1.ItemController do
     ResponseController.render_data(conn, items)
   end
 
-  # GET /users/user_id/items/id
-  def show(conn, %{"user_id" => _, "id" => id}) do
+  # GET /items/id
+  def show(conn, %{"id" => id}) do
     case user = Repo.get(Item, id) do
       nil ->
         ResponseController.not_found(conn,
@@ -25,8 +25,11 @@ defmodule Butler.API.V1.ItemController do
     end
   end
 
-  # POST /users/user_id/items
-  def create(conn, params = %{"user_id" => _, "raw_term" => _}) do
+  # GET /users/user_id/items/?raw_term
+
+  # POST /items
+  # NOTE: user_id is alexa id, still need to convert to db user id
+  def create(conn, params = %{"alexa_id" => _, "item" => _}) do
     changeset = Item.registration_changeset(params)
     case Repo.insert(changeset) do
       {:ok, item} ->

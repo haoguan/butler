@@ -2,9 +2,9 @@ defmodule Butler.ItemControllerTest do
   use Butler.ConnCase
   use Timex
 
-  test "POST api/v1/users/user_id/items" do
+  test "POST api/v1/items?alexa_id=&item=" do
     mock_user = insert_mock_user("amzn1.test.setupuser.id")
-    conn = post build_conn(), Enum.join(["api/v1/users/", mock_user.id]) <> "/items", [raw_term: "kitchen towels"]
+    conn = post build_conn(), "api/v1/items/", [alexa_id: mock_user.alexa_id, item: "kitchen towels"]
     %{"description" => description, "status" => status,
       "data" => %{"id" => _, "type" => type, "modifier" => modifier,
       "expiration_date" => expiration_date}} = json_response(conn, 201)
@@ -19,9 +19,9 @@ defmodule Butler.ItemControllerTest do
     assert Timex.diff(Timex.now(), expiration, :months) == -1
   end
 
-  test "POST api/v1/users/user_id/items with trailing words" do
+  test "POST api/v1/items?alexa_id=&item= with trailing words" do
     mock_user = insert_mock_user("amzn1.test.setupuser.id")
-    conn = post build_conn(), Enum.join(["api/v1/users/", mock_user.id]) <> "/items", [raw_term: "Angelina's clarisonic for shower"]
+    conn = post build_conn(), "api/v1/items/", [alexa_id: mock_user.alexa_id, item: "Angelina's clarisonic for shower"]
     %{"description" => description, "status" => status,
       "data" => %{"id" => _, "type" => type, "modifier" => modifier,
       "expiration_date" => expiration_date}} = json_response(conn, 201)
@@ -36,12 +36,12 @@ defmodule Butler.ItemControllerTest do
     assert Timex.diff(Timex.now(), expiration, :months) == -3
   end
 
-  test "GET api/v1/users/user_id/items" do
+  test "GET api/v1/items&alexa_id=" do
     {:ok, context} = setup_users_with_items
     %{user1: _, user2: experienced_user} = context[:users]
     %{item1: _, item2: experienced_item_1, item3: experienced_item_2} = context[:items]
 
-    conn = get build_conn(), Enum.join(["api/v1/users/", experienced_user.id]) <> "/items", nil
+    conn = get build_conn(), "api/v1/items", [alexa_id: experienced_user.alexa_id]
     %{"description" => description, "status" => status,
       "data" => data = [%{"id" => item_id_1}, %{"id" => item_id_2}]} = json_response(conn, 200)
     assert status == 200

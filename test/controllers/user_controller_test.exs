@@ -4,7 +4,7 @@ defmodule Butler.UserControllerTest do
   test "POST api/v1/users" do
     conn = post build_conn(), "api/v1/users", [alexa_id: "amzn1.test.postuser.id"]
     %{"description" => description, "status" => status,
-      "data" => %{"id" => _, "alexa_id_hash" => _}} = json_response(conn, 201)
+      "data" => %{"id" => _, "alexa_id" => _}} = json_response(conn, 201)
     assert status == 201
     assert description == "User successfully created"
   end
@@ -41,7 +41,7 @@ defmodule Butler.UserControllerTest do
     mock_user = insert_mock_user("amzn1.test.user1.id")
     conn = get build_conn(), Enum.join(["api/v1/users/", mock_user.id]), nil
     %{"description" => description, "status" => status,
-      "data" => %{"id" => get_id, "alexa_id_hash" => _}} = json_response(conn, 200)
+      "data" => %{"id" => get_id, "alexa_id" => _}} = json_response(conn, 200)
     assert status == 200
     assert description == "Operation successfully completed"
     assert mock_user.id == get_id

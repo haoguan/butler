@@ -23,6 +23,7 @@ defmodule Butler.Web do
       import Ecto
       import Ecto.Changeset
       import Ecto.Query
+      alias Butler.Repo
     end
   end
 
