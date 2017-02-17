@@ -1,6 +1,19 @@
 defmodule Butler.API.V1.ItemController do
   use Butler.Web, :controller
   alias Butler.Item
+  alias Butler.Classify
+
+  # GET /items with term
+  def index(conn, %{"alexa_id" => alexa_id, "item" => item}) do
+    interpretation = Classify.interpret_term(item)
+    case interpretation do
+      %{:type => type, :modifier => modifier} ->
+        query = Item.query_user_items_by_type(alexa_id, type, modifier)
+        ResponseController.render_data(conn, Repo.all(query))
+      _ ->
+        ResponseController.render_data(conn, [], "Unable to parse input item")
+    end
+  end
 
   # GET /items scoped to user
   def index(conn, %{"alexa_id" => alexa_id}) do
@@ -8,7 +21,7 @@ defmodule Butler.API.V1.ItemController do
     ResponseController.render_data(conn, Repo.all(scoped_items))
   end
 
-  # GET /items (Debug)
+  # GET all /items (Debug)
   def index(conn, _params) do
     items = Repo.all(Item)
     ResponseController.render_data(conn, items)
@@ -25,10 +38,7 @@ defmodule Butler.API.V1.ItemController do
     end
   end
 
-  # GET /users/user_id/items/?raw_term
-
   # POST /items
-  # NOTE: user_id is alexa id, still need to convert to db user id
   def create(conn, params = %{"alexa_id" => _, "item" => _}) do
     changeset = Item.registration_changeset(params)
     case Repo.insert(changeset) do

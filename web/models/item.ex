@@ -98,4 +98,33 @@ defmodule Butler.Item do
     select: i
   end
 
+  def query_user_items_by_type(alexa_id, type, modifier) do
+    user_items = query_user_items(alexa_id)
+    from i in user_items,
+    where: i.type == ^type and i.modifier == ^modifier,
+    select: i
+  end
+
+  ##############
+  # CONVERSION #
+  ##############
+
+  def extract_key_fields(item) do
+    %{id: item.id, type: item.type, modifier: item.modifier}
+  end
+
+  def compare_item_arrays(items1, items2) do
+    set1 = items1 |> Enum.map(fn item ->
+      extract_key_fields(item)
+    end)
+    |> MapSet.new
+
+    # Compare against first set
+    items2 |> Enum.map(fn item ->
+      extract_key_fields(item)
+    end)
+    |> MapSet.new
+    |> MapSet.equal?(set1)
+  end
+
 end

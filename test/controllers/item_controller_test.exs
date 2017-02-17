@@ -55,20 +55,19 @@ defmodule Butler.ItemControllerTest do
   end
 
   test "GET api/v1/items&alexa_id=" do
-    {:ok, context} = setup_users_with_items
-    %{user1: _, user2: experienced_user} = context[:users]
-    %{item1: _, item2: experienced_item_1, item3: experienced_item_2} = context[:items]
+    %{user: user2, items: user2_items} = setup_users([
+      %{id: "amzn1.test.user1.id", items: ["sweet ketchup from safeway"]},
+      %{id: "amzn1.test.user2.id", items: ["jack cheese from trader's joe", "rib leftovers"]}
+    ])
+    |> List.last
 
-    conn = get build_conn(), "api/v1/items", [alexa_id: experienced_user.alexa_id]
+    conn = get build_conn(), "api/v1/items", [alexa_id: user2.alexa_id]
     %{"description" => description, "status" => status,
-      "data" => data = [%{"id" => item_id_1}, %{"id" => item_id_2}]} = json_response(conn, 200)
+      "data" => response} = json_response(conn, 200)
     assert status == 200
     assert description == "Operation successfully completed"
     # Assert response data items contains expected items
-    assert Enum.member?([item_id_1, item_id_2], experienced_item_1.id)
-    assert Enum.member?([item_id_1, item_id_2], experienced_item_2.id)
-    assert Enum.count(data) == 2
+    assert is_items_match_response(user2_items, response)
   end
-
 
 end

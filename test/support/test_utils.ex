@@ -18,17 +18,18 @@ defmodule Butler.TestUtils do
     |> Repo.insert!
   end
 
-  def setup_users_with_items do
-    # User with one item
-    user = insert_mock_user("amzn1.test.user1.id")
-    item1 = insert_mock_item(user.alexa_id, "sweet ketchup from safeway")
+  def setup_users(user_info) when is_list(user_info) do
+    user_info
+    |> Enum.map(fn %{id: alexa_id, items: item_names} ->
+        user = insert_mock_user(alexa_id)
+        # Ensure v is a list of items
+        items = List.flatten([item_names])
+        |> Enum.map(fn item ->
+            insert_mock_item(alexa_id, item)
+          end)
 
-    # User with a few items
-    user2 = insert_mock_user("amzn1.test.user2.id")
-    # TODO: Add test for capital letters!
-    item2 = insert_mock_item(user2.alexa_id, "jack cheese from trader's joe")
-    item3 = insert_mock_item(user2.alexa_id, "rib leftovers")
-    {:ok, users: %{user1: user, user2: user2}, items: %{item1: item1, item2: item2, item3: item3}}
+        %{user: user, items: items}
+      end)
   end
 
   def convert_ISO_to_Timex(datetime) do
@@ -37,5 +38,26 @@ defmodule Butler.TestUtils do
         {:ok, Timex.to_datetime(d)}
       {:error, _} -> :error
     end
+  end
+
+
+  ###########
+  # HELPERS #
+  ###########
+
+  def is_items_match_response(items, response) do
+    # Convert response map into item structs
+    response_structs = [response]
+    |> List.flatten
+    |> Enum.map(fn item_response ->
+      struct(Item, string_to_atom_keys(item_response))
+    end)
+
+    # Compare key values in both item arrays using set
+    Item.compare_item_arrays(items, response_structs)
+  end
+
+  defp string_to_atom_keys(map) do
+    for {key, val} <- map, into: %{}, do: {String.to_atom(key), val}
   end
 end
