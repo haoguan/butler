@@ -8,6 +8,8 @@ defmodule Butler.API.V1.ItemController do
     interpretation = Classify.interpret_term(item)
     case interpretation do
       %{:type => type, :modifier => modifier} ->
+        IO.inspect type
+        IO.inspect modifier
         query = Item.query_user_items_by_type(alexa_id, type, modifier)
         ResponseController.render_data(conn, Repo.all(query))
       _ ->

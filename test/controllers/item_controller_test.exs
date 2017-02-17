@@ -54,20 +54,39 @@ defmodule Butler.ItemControllerTest do
     assert Timex.diff(Timex.now(), expiration, :months) == -3
   end
 
-  test "GET api/v1/items&alexa_id=" do
-    %{user: user2, items: user2_items} = setup_users([
-      %{id: "amzn1.test.user1.id", items: ["sweet ketchup from safeway"]},
+  # test "GET api/v1/items&alexa_id=" do
+  #   %{user: user2, items: user2_items} = setup_users([
+  #     %{id: "amzn1.test.user1.id", items: ["sweet ketchup from safeway"]},
+  #     %{id: "amzn1.test.user2.id", items: ["jack cheese from trader's joe", "rib leftovers"]}
+  #   ])
+  #   |> List.last
+  #
+  #   conn = get build_conn(), "api/v1/items", [alexa_id: user2.alexa_id]
+  #   %{"description" => description, "status" => status,
+  #     "data" => response} = json_response(conn, 200)
+  #   assert status == 200
+  #   assert description == "Operation successfully completed"
+  #   # Assert response data items contains expected items
+  #   assert is_items_match_response(user2_items, response)
+  # end
+
+  test "GET api/v1/items&alexa_id=&item=" do
+    %{user: user1, items: user1_items} = setup_users([
+      %{id: "amzn1.test.user1.id", items: ["sweet ketchup from safeway", "room blinds near window", "evaporated milk"]},
       %{id: "amzn1.test.user2.id", items: ["jack cheese from trader's joe", "rib leftovers"]}
     ])
-    |> List.last
+    |> List.first
 
-    conn = get build_conn(), "api/v1/items", [alexa_id: user2.alexa_id]
+    conn = get build_conn(), "api/v1/items", [alexa_id: user1.alexa_id, item: "room blinds"]
     %{"description" => description, "status" => status,
       "data" => response} = json_response(conn, 200)
     assert status == 200
     assert description == "Operation successfully completed"
     # Assert response data items contains expected items
-    assert is_items_match_response(user2_items, response)
+    expectedItem = user1_items |> Enum.filter(fn item ->
+      item.type == "blinds" && item.modifier == "room"
+    end)
+    assert is_items_match_response(expectedItem, response)
   end
 
 end

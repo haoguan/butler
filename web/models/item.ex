@@ -101,8 +101,7 @@ defmodule Butler.Item do
   def query_user_items_by_type(alexa_id, type, modifier) do
     user_items = query_user_items(alexa_id)
     from i in user_items,
-    where: i.type == ^type and i.modifier == ^modifier,
-    select: i
+    where: i.type == ^type and i.modifier == ^modifier
   end
 
   ##############
