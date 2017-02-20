@@ -6,6 +6,7 @@ defmodule Butler.Repo.Migrations.CreateItem do
       add :type, :string, null: false
       add :modifier, :string
       add :expiration_date, :utc_datetime
+      add :expiration_string, :string
       add :user_id, references(:users)
 
       timestamps

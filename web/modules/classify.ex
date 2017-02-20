@@ -78,14 +78,32 @@ defmodule Butler.Classify do
     item_atom = String.to_atom(item)
     # Using subscript notation will return nil for non-existing key
     # Using dot notation will throw KeyError instead
+
+    # TODO: Generic way to unwrap errors to properly chain
     case @itemExpirations[item_atom] do
       nil ->
         IO.puts item <> " could not be found in list"
         {:error, item}
       expiration ->
-        Timex.shift(start_date, seconds: expiration.seconds,
+        expiration_date = Timex.shift(start_date, seconds: expiration.seconds,
           minutes: expiration.minutes, hours: expiration.hours, days: expiration.days,
           months: expiration.months, years: expiration.years)
+
+        # Ex. 20 days from now, on Monday, January 23, 2017
+        case Timex.format(expiration_date, "{relative}", Timex.Format.DateTime.Formatters.Relative) do
+          {:error, term} ->
+            IO.puts item <> " RELATIVE could not be found in list"
+            {:error, item}
+          {:ok, relative_component} ->
+            case Timex.format(expiration_date, "{WDfull}, {Mfull} {D}, {YYYY}") do
+              {:error, term} ->
+                IO.puts item <> " FULLL could not be found in list"
+                {:error, item}
+              {:ok, full_component} ->
+                expiration_string = Enum.join([relative_component, full_component], ", on ")
+                {:ok, expiration_date, expiration_string}
+            end
+        end
     end
   end
 

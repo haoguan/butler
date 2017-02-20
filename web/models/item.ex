@@ -1,7 +1,7 @@
 defmodule Butler.Item do
   alias Butler.Item
   alias Butler.User
-  @derive {Poison.Encoder, only: [:id, :type, :modifier, :expiration_date]}
+  @derive {Poison.Encoder, only: [:id, :type, :modifier, :expiration_date, :expiration_string]}
 
   use Butler.Web, :model
   alias Butler.Classify
@@ -15,13 +15,14 @@ defmodule Butler.Item do
     field :type, :string
     field :modifier, :string
     field :expiration_date, :utc_datetime
+    field :expiration_string, :string
     belongs_to :user, Butler.User
 
     timestamps
   end
 
   @allowed_fields ~w(item alexa_id)
-  @required_fields [:type, :expiration_date, :user_id]
+  @required_fields [:type, :expiration_date, :expiration_string, :user_id]
 
   def registration_changeset(params) do
     %Item{}
@@ -80,8 +81,10 @@ defmodule Butler.Item do
           {:error, term} ->
             IO.puts "failure to find expirationDate for " <> term <> "."
             changeset
-          expiration_date ->
-            put_change(changeset, :expiration_date, expiration_date)
+          {:ok, expiration_date, expiration_string} ->
+            changeset
+            |> put_change(:expiration_date, expiration_date)
+            |> put_change(:expiration_string, expiration_string)
         end
     end
   end
