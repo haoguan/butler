@@ -25,11 +25,36 @@ defmodule Butler.Item do
   @required_fields [:type, :expiration_date, :expiration_string, :user_id]
 
   def registration_changeset(params) do
+    setup_changeset(params)
+    |> expiration_date_changeset(params)
+    |> validate_changeset
+  end
+
+  def test_registration_changeset(params, %{"expiration_date" => expiration_date, "expiration_string" => expiration_string}) do
+    setup_changeset(params)
+    # TODO: Require expiration string for testing too
+    |> putExpirationDate(expiration_date, expiration_string)
+    |> validate_changeset
+  end
+
+  ########################
+  # CHANGESET COMPONENTS #
+  ########################
+
+  def setup_changeset(params) do
     %Item{}
     |> cast(params, @allowed_fields)
     |> convertAlexaIdToUserId(params)
     |> addTermComponents(params)
-    |> addExpirationDate
+  end
+
+  def expiration_date_changeset(changeset, params) do
+    changeset
+    |> addExpirationDate(params)
+  end
+
+  def validate_changeset(changeset) do
+    changeset
     |> validate_required(@required_fields)
     |> foreign_key_constraint(:user_id)
     |> unique_constraint(:user_id, name: :items_type_modifier_user_id_index)
@@ -71,22 +96,36 @@ defmodule Butler.Item do
     IO.puts "addTermComponents: raw_term not found in params"
   end
 
-  def addExpirationDate(changeset) do
+  def addExpirationDate(changeset, params) when is_map(params) do
+    case params do
+      %{"datetime" => datetime} ->
+        addExpirationDate(changeset, {:ok, datetime})
+      _ ->
+        addExpirationDate(changeset, {:ok, Timex.now})
+    end
+  end
+
+  # TODO: Check if current_date is a datetime?
+  def addExpirationDate(changeset, {:ok, datetime}) do
     case get_change(changeset, :type) do
       nil ->
         IO.puts "addExpirationDate: type cannot be found within changeset"
         changeset
       type ->
-        case Classify.expirationDateForItem(type) do
+        case Classify.expirationDateForItem(type, datetime) do
           {:error, term} ->
             IO.puts "failure to find expirationDate for " <> term <> "."
             changeset
           {:ok, expiration_date, expiration_string} ->
-            changeset
-            |> put_change(:expiration_date, expiration_date)
-            |> put_change(:expiration_string, expiration_string)
+            putExpirationDate(changeset, expiration_date, expiration_string)
         end
     end
+  end
+
+  def putExpirationDate(changeset, expiration_date, expiration_string) do
+    changeset
+    |> put_change(:expiration_date, expiration_date)
+    |> put_change(:expiration_string, expiration_string)
   end
 
   ###########
@@ -105,6 +144,13 @@ defmodule Butler.Item do
     user_items = query_user_items(alexa_id)
     from i in user_items,
     where: i.type == ^type and i.modifier == ^modifier
+  end
+
+  # TODO: Dynamic interval depending on category!
+  def query_user_items_by_status(alexa_id) do
+    user_items = query_user_items(alexa_id)
+    from i in user_items,
+    where: fragment("? - now() <= interval '1 month'", i.expiration_date)
   end
 
   ##############

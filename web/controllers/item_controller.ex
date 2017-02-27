@@ -15,6 +15,12 @@ defmodule Butler.API.V1.ItemController do
     end
   end
 
+  # GET /items in bulk that need attention soon
+  def index(conn, %{"alexa_id" => alexa_id, "status" => _}) do
+      query = Item.query_user_items_by_status(alexa_id)
+      ResponseController.render_data(conn, Repo.all(query))
+  end
+
   # GET /items scoped to user
   def index(conn, %{"alexa_id" => alexa_id}) do
     scoped_items = Item.query_user_items(alexa_id)

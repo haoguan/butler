@@ -2,6 +2,10 @@ defmodule Butler.ItemControllerTest do
   use Butler.ConnCase
   use Timex
 
+  ##########
+  # CREATE #
+  ##########
+
   test "POST api/v1/items?alexa_id=&item=" do
     mock_user = insert_mock_user("amzn1.test.setupuser.id")
     conn = post build_conn(), "api/v1/items/", [alexa_id: mock_user.alexa_id, item: "kitchen towels"]
@@ -18,7 +22,7 @@ defmodule Butler.ItemControllerTest do
     # assert String.contains?(expiration_string, "in 30 days")
 
     # negative if first datetime occurs before second
-    assert Timex.diff(Timex.now(), expiration, :months) == -1
+    assert Timex.diff(Timex.now, expiration, :months) == -1
   end
 
   test "POST api/v1/items?alexa_id=&item= with no modifiers" do
@@ -36,7 +40,7 @@ defmodule Butler.ItemControllerTest do
     assert modifier == ""
 
     # negative if first datetime occurs before second
-    assert Timex.diff(Timex.now(), expiration, :months) == -1
+    assert Timex.diff(Timex.now, expiration, :months) == -1
   end
 
   test "POST api/v1/items?alexa_id=&item= with trailing words" do
@@ -55,13 +59,17 @@ defmodule Butler.ItemControllerTest do
     assert String.contains?(expiration_string, "in 2 months")
 
     # negative if first datetime occurs before second
-    assert Timex.diff(Timex.now(), expiration, :months) == -3
+    assert Timex.diff(Timex.now, expiration, :months) == -3
   end
+
+  #######
+  # GET #
+  #######
 
   test "GET api/v1/items&alexa_id=&item=" do
     %{user: user1, items: user1_items} = setup_users([
-      %{id: "amzn1.test.user1.id", items: ["sweet ketchup from safeway", "room blinds near window", "evaporated milk"]},
-      %{id: "amzn1.test.user2.id", items: ["jack cheese from trader's joe", "rib leftovers"]}
+      %{id: "amzn1.test.user1.id", items: [%TestItem{name: "sweet ketchup from safeway"}, %TestItem{name: "room blinds near window"}, %TestItem{name: "evaporated milk"}]},
+      %{id: "amzn1.test.user2.id", items: [%TestItem{name: "jack cheese from trader's joe"}, %TestItem{name: "rib leftovers"}]}
     ])
     |> List.first
 
@@ -76,5 +84,24 @@ defmodule Butler.ItemControllerTest do
     end)
     assert is_items_match_response(expectedItem, response)
   end
+
+  # test "GET api/v1/items&alexa_id=&status=1" do
+  #   %{user: user1, items: user1_items} = setup_users([
+  #     %{id: "amzn1.test.user1.id", items: [%TestItem{name: "sweet ketchup from safeway"}, %TestItem{name: "room blinds near window"}, %TestItem{name: "evaporated milk"}]},
+  #     %{id: "amzn1.test.user2.id", items: [%TestItem{name: "jack cheese from trader's joe"}, %TestItem{name: "rib leftovers"}]}
+  #   ])
+  #   |> List.first
+  #
+  #   conn = get build_conn(), "api/v1/items", [alexa_id: user1.alexa_id, item: "room blinds"]
+  #   %{"description" => description, "status" => status,
+  #     "data" => response} = json_response(conn, 200)
+  #   assert status == 200
+  #   assert description == "Operation successfully completed"
+  #   # Assert response data items contains expected items
+  #   expectedItem = user1_items |> Enum.filter(fn item ->
+  #     item.type == "blinds" && item.modifier == "room"
+  #   end)
+  #   assert is_items_match_response(expectedItem, response)
+  # end
 
 end
