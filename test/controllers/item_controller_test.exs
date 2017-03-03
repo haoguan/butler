@@ -56,7 +56,7 @@ defmodule Butler.ItemControllerTest do
     assert type == "clarisonic"
     assert modifier == "Angelina's"
     # TODO: Can't match full string b/c dates are dynamic!!
-    assert String.contains?(expiration_string, "in 2 months")
+    assert String.contains?(expiration_string, "in 3 months")
 
     # negative if first datetime occurs before second
     assert Timex.diff(Timex.now, expiration, :months) == -3
@@ -85,23 +85,32 @@ defmodule Butler.ItemControllerTest do
     assert is_items_match_response(expectedItem, response)
   end
 
-  # test "GET api/v1/items&alexa_id=&status=1" do
-  #   %{user: user1, items: user1_items} = setup_users([
-  #     %{id: "amzn1.test.user1.id", items: [%TestItem{name: "sweet ketchup from safeway"}, %TestItem{name: "room blinds near window"}, %TestItem{name: "evaporated milk"}]},
-  #     %{id: "amzn1.test.user2.id", items: [%TestItem{name: "jack cheese from trader's joe"}, %TestItem{name: "rib leftovers"}]}
-  #   ])
-  #   |> List.first
-  #
-  #   conn = get build_conn(), "api/v1/items", [alexa_id: user1.alexa_id, item: "room blinds"]
-  #   %{"description" => description, "status" => status,
-  #     "data" => response} = json_response(conn, 200)
-  #   assert status == 200
-  #   assert description == "Operation successfully completed"
-  #   # Assert response data items contains expected items
-  #   expectedItem = user1_items |> Enum.filter(fn item ->
-  #     item.type == "blinds" && item.modifier == "room"
-  #   end)
-  #   assert is_items_match_response(expectedItem, response)
-  # end
+  test "GET api/v1/items&alexa_id=&status=1 reminder within default 2 weeks" do
+    # Fuzzy two weeks because of potential calculation errors
+    two_weeks_expiration = Timex.shift(Timex.now, minutes: 58, hours: 10, days: 6, weeks: 1)
+    five_days_expiration = Timex.shift(Timex.now, days: 5)
+    one_month_expiration = Timex.shift(Timex.now, months: 1)
+    already_passed_expiration = Timex.shift(Timex.now, days: -1)
+    %{user: user1, items: user1_items} = setup_users([
+      %{id: "amzn1.test.user1.id", items: [%TestItem{name: "sweet ketchup from safeway", expiration_date: two_weeks_expiration},
+                                           %TestItem{name: "room blinds near window", expiration_date: one_month_expiration},
+                                           %TestItem{name: "evaporated milk", expiration_date: five_days_expiration},
+                                           %TestItem{name: "blue cheese", expiration_date: already_passed_expiration}]},
+      %{id: "amzn1.test.user2.id", items: [%TestItem{name: "jack cheese from trader's joe", expiration_date: two_weeks_expiration},
+                                           %TestItem{name: "rib leftovers", expiration_date: one_month_expiration}]}
+    ])
+    |> List.first
+
+    conn = get build_conn(), "api/v1/items", [alexa_id: user1.alexa_id, status: 1]
+    %{"description" => description, "status" => status,
+      "data" => response} = json_response(conn, 200)
+    assert status == 200
+    assert description == "Operation successfully completed"
+    # Assert response data items contains expected items
+    expectedItems = user1_items |> Enum.filter(fn item ->
+      (item.type == "ketchup" && item.modifier == "sweet") || (item.type == "milk" && item.modifier == "evaporated")
+    end)
+    assert is_items_match_response(expectedItems, response)
+  end
 
 end
