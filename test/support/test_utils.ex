@@ -51,6 +51,11 @@ defmodule Butler.TestUtils do
   # HELPERS #
   ###########
 
+  def is_items_match_response_for_key(items, response, key) do
+    response_items = Map.get(response, key)
+    is_items_match_response(items, response_items)
+  end
+
   def is_items_match_response(items, response) do
     # Convert response map into item structs
     response_structs = [response]

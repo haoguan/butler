@@ -106,11 +106,16 @@ defmodule Butler.ItemControllerTest do
       "data" => response} = json_response(conn, 200)
     assert status == 200
     assert description == "Operation successfully completed"
-    # Assert response data items contains expected items
-    expectedItems = user1_items |> Enum.filter(fn item ->
+    # Assert response data items contains expected warning and expired items
+    expired_items = user1_items |> Enum.filter(fn item ->
+      (item.type == "cheese" && item.modifier == "blue")
+    end)
+    warning_items = user1_items |> Enum.filter(fn item ->
       (item.type == "ketchup" && item.modifier == "sweet") || (item.type == "milk" && item.modifier == "evaporated")
     end)
-    assert is_items_match_response(expectedItems, response)
+
+    assert is_items_match_response_for_key(expired_items, response, "expired_items")
+    assert is_items_match_response_for_key(warning_items, response, "warning_items")
   end
 
 end
