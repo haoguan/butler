@@ -107,19 +107,19 @@ defmodule Butler.Classify do
     end
   end
 
-  def interpret_term(raw_term) do
-    # Find index of the type in words list
-    words = raw_term |> String.split(" ", trim: true)
-    type_index = words |> Enum.find_index(fn word ->
-      Map.has_key?(@itemExpirations, String.to_atom(word))
-    end)
-
-    # Skip error check because index already verified
-    {:ok, type} = words |> Enum.fetch(type_index)
-
-    # TODO: Handle complex expressions like "Angelina's bedsheets in the room"
-    # Ignore words after the type has been identified
-    modifier = words |> Enum.take(type_index) |> Enum.join(" ")
-    %{:type => type, :modifier => modifier}
-  end
+  # def interpret_term(raw_term) do
+  #   # Find index of the type in words list
+  #   words = raw_term |> String.split(" ", trim: true)
+  #   type_index = words |> Enum.find_index(fn word ->
+  #     Map.has_key?(@itemExpirations, String.to_atom(word))
+  #   end)
+  #
+  #   # Skip error check because index already verified
+  #   {:ok, type} = words |> Enum.fetch(type_index)
+  #
+  #   # TODO: Handle complex expressions like "Angelina's bedsheets in the room"
+  #   # Ignore words after the type has been identified
+  #   modifier = words |> Enum.take(type_index) |> Enum.join(" ")
+  #   %{:type => type, :modifier => modifier}
+  # end
 end

@@ -1,19 +1,16 @@
 defmodule Butler.Item do
   alias Butler.Item
   alias Butler.User
-  @derive {Poison.Encoder, only: [:id, :type, :modifier, :expiration_date, :expiration_string]}
+  @derive {Poison.Encoder, only: [:id, :user_id, :type, :expiration_date, :expiration_string]}
 
   use Butler.Web, :model
-  alias Butler.Classify
+  alias Butler.Interpreter
 
-  # TODO: Support items with generic modifiers
-  # e.g. kitchen towel, Angelina's toothbrush
   schema "items" do
     field :alexa_id, :string, virtual: true
-    field :item, :string, virtual: true
-
+    field :item, :string
     field :type, :string
-    field :modifier, :string
+    field :expiration, :string, virtual: true
     field :expiration_date, :utc_datetime
     field :expiration_string, :string
     belongs_to :user, Butler.User
@@ -21,8 +18,8 @@ defmodule Butler.Item do
     timestamps
   end
 
-  @allowed_fields ~w(item alexa_id)
-  @required_fields [:type, :expiration_date, :expiration_string, :user_id]
+  @allowed_fields ~w(item expiration alexa_id)
+  @required_fields [:item, :type, :expiration_date, :expiration_string, :user_id]
 
   def registration_changeset(params) do
     setup_changeset(params)
@@ -30,6 +27,7 @@ defmodule Butler.Item do
     |> validate_changeset
   end
 
+  # TODO: Consolidate this changeset by using the same relative date interpretation method
   def test_registration_changeset(params, %{"expiration_date" => expiration_date, "expiration_string" => expiration_string}) do
     setup_changeset(params)
     # TODO: Require expiration string for testing too
@@ -45,19 +43,19 @@ defmodule Butler.Item do
     %Item{}
     |> cast(params, @allowed_fields)
     |> convertAlexaIdToUserId(params)
-    |> addTermComponents(params)
+    # |> addTermComponents(params)
   end
 
   def expiration_date_changeset(changeset, params) do
     changeset
-    |> addExpirationDate(params)
+    |> interpretExpirationDate
   end
 
   def validate_changeset(changeset) do
     changeset
     |> validate_required(@required_fields)
     |> foreign_key_constraint(:user_id)
-    |> unique_constraint(:user_id, name: :items_type_modifier_user_id_index)
+    |> unique_constraint(:user_id, name: :items_type_item_user_id_index)
   end
 
   ###########
@@ -78,49 +76,65 @@ defmodule Butler.Item do
 
   end
 
-  def addTermComponents(changeset, %{"item" => item}) do
-    interpretation = Classify.interpret_term(item)
-    case interpretation do
-      %{:type => type, :modifier => modifier} ->
-        changeset
-        |> put_change(:type, type)
-        |> put_change(:modifier, modifier)
-      _ ->
-        IO.puts "interpretation of term failed"
-        changeset
-    end
-  end
+  # def addTermComponents(changeset, %{"item" => item}) do
+  #   interpretation = Classify.interpret_term(item)
+  #   case interpretation do
+  #     %{:type => type, :modifier => modifier} ->
+  #       changeset
+  #       |> put_change(:type, type)
+  #       |> put_change(:modifier, modifier)
+  #     _ ->
+  #       IO.puts "interpretation of term failed"
+  #       changeset
+  #   end
+  # end
+  #
+  # # Error case
+  # def addTermComponents(_changeset, _params) do
+  #   IO.puts "addTermComponents: raw_term not found in params"
+  # end
 
-  # Error case
-  def addTermComponents(_changeset, _params) do
-    IO.puts "addTermComponents: raw_term not found in params"
-  end
-
-  def addExpirationDate(changeset, params) when is_map(params) do
-    case params do
-      %{"datetime" => datetime} ->
-        addExpirationDate(changeset, {:ok, datetime})
-      _ ->
-        addExpirationDate(changeset, {:ok, Timex.now})
-    end
-  end
-
-  # TODO: Check if current_date is a datetime?
-  def addExpirationDate(changeset, {:ok, datetime}) do
-    case get_change(changeset, :type) do
+  def interpretExpirationDate(changeset) do
+    case get_change(changeset, :expiration) do
       nil ->
-        IO.puts "addExpirationDate: type cannot be found within changeset"
+        IO.puts "interpretExpirationDate: expiration not found in changeset"
         changeset
-      type ->
-        case Classify.expirationDateForItem(type, datetime) do
-          {:error, term} ->
-            IO.puts "failure to find expirationDate for " <> term <> "."
+      user_expiration ->
+        case Interpreter.interpret_expiration(user_expiration) do
+          {:error, invalid_expiration} ->
+            IO.puts "interpretExpirationDate: unable to interpret -  " <> invalid_expiration <> "."
             changeset
           {:ok, expiration_date, expiration_string} ->
             putExpirationDate(changeset, expiration_date, expiration_string)
         end
     end
   end
+
+  # def addExpirationDate(changeset, params) when is_map(params) do
+  #   case params do
+  #     %{"datetime" => datetime} ->
+  #       addExpirationDate(changeset, {:ok, datetime})
+  #     _ ->
+  #       addExpirationDate(changeset, {:ok, Timex.now})
+  #   end
+  # end
+  #
+  # # TODO: Check if current_date is a datetime?
+  # def addExpirationDate(changeset, {:ok, datetime}) do
+  #   case get_change(changeset, :type) do
+  #     nil ->
+  #       IO.puts "addExpirationDate: type cannot be found within changeset"
+  #       changeset
+  #     type ->
+  #       case Classify.expirationDateForItem(type, datetime) do
+  #         {:error, term} ->
+  #           IO.puts "failure to find expirationDate for " <> term <> "."
+  #           changeset
+  #         {:ok, expiration_date, expiration_string} ->
+  #           putExpirationDate(changeset, expiration_date, expiration_string)
+  #       end
+  #   end
+  # end
 
   def putExpirationDate(changeset, expiration_date, expiration_string) do
     changeset
