@@ -46,8 +46,8 @@ defmodule Butler.API.V1.ItemController do
     end
   end
 
-  # POST /items
-  def create(conn, params = %{"alexa_id" => _, "item" => _}) do
+  # POST /items - item and also relative date
+  def create(conn, params = %{"alexa_id" => _, "item" => _, "expiration" => _}) do
     changeset = Item.registration_changeset(params)
     case Repo.insert(changeset) do
       {:ok, item} ->
