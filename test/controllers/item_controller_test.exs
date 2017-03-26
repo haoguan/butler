@@ -6,24 +6,24 @@ defmodule Butler.ItemControllerTest do
   # CREATE #
   ##########
 
-  test "POST api/v1/items?alexa_id=&item=" do
-    mock_user = insert_mock_user("amzn1.test.setupuser.id")
-    conn = post build_conn(), "api/v1/items/", [alexa_id: mock_user.alexa_id, item: "kitchen towels"]
-    %{"description" => description, "status" => status,
-      "data" => %{"id" => _, "type" => type, "modifier" => modifier,
-      "expiration_date" => expiration_date, "expiration_string" => _}} = json_response(conn, 201)
-
-    {:ok, expiration} = convert_ISO_to_Timex(expiration_date)
-    assert status == 201
-    assert description == "Item successfully created"
-    assert type == "towels"
-    assert modifier == "kitchen"
-    # TODO: Can't match expiration string b/c remaining days depends on month, e.g. Feb has fewer days!
-    # assert String.contains?(expiration_string, "in 30 days")
-
-    # negative if first datetime occurs before second
-    assert Timex.diff(Timex.now, expiration, :months) == -1
-  end
+  # test "POST api/v1/items?alexa_id=&item=" do
+  #   mock_user = insert_mock_user("amzn1.test.setupuser.id")
+  #   conn = post build_conn(), "api/v1/items/", [alexa_id: mock_user.alexa_id, item: "kitchen towels"]
+  #   %{"description" => description, "status" => status,
+  #     "data" => %{"id" => _, "type" => type, "modifier" => modifier,
+  #     "expiration_date" => expiration_date, "expiration_string" => _}} = json_response(conn, 201)
+  #
+  #   {:ok, expiration} = convert_ISO_to_Timex(expiration_date)
+  #   assert status == 201
+  #   assert description == "Item successfully created"
+  #   assert type == "towels"
+  #   assert modifier == "kitchen"
+  #   # TODO: Can't match expiration string b/c remaining days depends on month, e.g. Feb has fewer days!
+  #   # assert String.contains?(expiration_string, "in 30 days")
+  #
+  #   # negative if first datetime occurs before second
+  #   assert Timex.diff(Timex.now, expiration, :months) == -1
+  # end
 
   # test "POST api/v1/items?alexa_id=&item= with no modifiers" do
   #   mock_user = insert_mock_user("amzn1.test.setupuser.id")
