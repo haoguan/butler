@@ -37,27 +37,28 @@ defmodule Butler.Number do
   def from_string("million"), do: 1_000_000
   def from_string("billion"), do: 1_000_000_000
 
-  @splittable_units ["thousand", "million", "billion"]
+  @large_number_units ["thousand", "million", "billion"]
 
   # General parser from a number text
   def from_string(number) do
     partitions =
       number
       |> remove_ands_from_string
-      |> add_split_characters(@splittable_units, "|")
+      |> add_split_characters(@large_number_units, "|")
       |> String.split("|")
-    IO.inspect partitions
     Enum.reduce(partitions, 0, fn(partition, acc) ->
       acc + calculate_number_partition(partition)
     end)
   end
 
+  # Add split component to number string for partitioning, keeps all units intact.
   defp add_split_characters(number_string, patterns, split_character) do
     Enum.reduce(patterns, number_string, fn(pattern, working_string) ->
       String.replace(working_string, pattern, pattern <> split_character)
     end)
   end
 
+  # For each number in partition, we add or multiply depending on unit
   defp calculate_number_partition(partition) do
     components = partition |> String.trim |> String.split
     Enum.reduce(components, 0, fn(component, acc) ->
@@ -75,7 +76,6 @@ defmodule Butler.Number do
   end
 
   defp is_multiply_component(component) do
-    component == "hundred" || Searchable.contains(@splittable_units, component)
-
+    component == "hundred" || Searchable.contains(@large_number_units, component)
   end
 end

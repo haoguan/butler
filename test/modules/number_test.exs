@@ -35,6 +35,10 @@ defmodule Butler.NumberTest do
     assert Number.from_string("three hundred and sixty eight") == 368
   end
 
+  test "hundreds with a single component" do
+    assert Number.from_string("eight hundred") == 800
+  end
+
   test "thousands with four components" do
     assert Number.from_string("eight hundred sixty two thousand four hundred ninety one") == 862_491
   end
@@ -43,5 +47,8 @@ defmodule Butler.NumberTest do
     assert Number.from_string("twelve million and two thousand and one") == 12_002_001
   end
 
+  test "thousands with a single component" do
+    assert Number.from_string("one thousand") == 1000
+  end
 
 end
