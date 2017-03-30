@@ -4,7 +4,7 @@ defmodule Butler.Item do
   @derive {Poison.Encoder, only: [:id, :user_id, :type, :expiration_date, :expiration_string]}
 
   use Butler.Web, :model
-  alias Butler.Interpreter
+  alias Butler.DateInterpreter
 
   schema "items" do
     field :alexa_id, :string, virtual: true
@@ -100,7 +100,7 @@ defmodule Butler.Item do
         IO.puts "interpretExpirationDate: expiration not found in changeset"
         changeset
       user_expiration ->
-        case Interpreter.interpret_expiration(user_expiration) do
+        case DateInterpreter.interpret_expiration(user_expiration) do
           {:error, invalid_expiration} ->
             IO.puts "interpretExpirationDate: unable to interpret -  " <> invalid_expiration <> "."
             changeset
