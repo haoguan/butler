@@ -27,16 +27,14 @@ defmodule Butler.Expiration do
         element != "s" || String.length(element) > 1
       end)
 
-    IO.inspect time_components
     # TODO: Error handling for when time unit isn't found in the map
     params = Enum.reduce(time_components, %{}, fn(time_component, working_expiration) ->
-      IO.inspect time_component
       time_component_parts = time_component |> String.trim |> String.split
       time_unit = time_component_parts |> List.last
       time_component_without_unit =
         time_component_parts
         |> List.delete_at(-1)
-        |> List.to_string
+        |> Enum.join(" ")
       computed_time = time_component_without_unit |> Number.from_string
       Map.put(working_expiration, @time_units[time_unit], computed_time)
     end)
@@ -45,6 +43,10 @@ defmodule Butler.Expiration do
 
   def from_exact_string(expiration) do
 
+  end
+
+  def includes_time_components(expiration) do
+    expiration.hours != 0 || expiration.minutes != 0 || expiration.seconds != 0
   end
 
   defp remove_ands_from_string(text) do
