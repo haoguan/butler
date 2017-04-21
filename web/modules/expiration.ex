@@ -1,4 +1,4 @@
-alias Butler.Number
+alias Butler.NumberParser
 
 defmodule Butler.Expiration do
   defstruct seconds: 0, minutes: 0, hours: 0, days: 0,
@@ -33,7 +33,7 @@ defmodule Butler.Expiration do
         time_component_parts
         |> List.delete_at(-1)
         |> Enum.join(" ")
-      computed_time = time_component_without_unit |> Number.from_string
+      computed_time = time_component_without_unit |> NumberParser.from_string
       Map.put(working_expiration, @time_units[time_unit], computed_time)
     end)
     struct(Butler.Expiration, params)
@@ -44,7 +44,6 @@ defmodule Butler.Expiration do
     exact_time =
       expiration
       |> remove_conjunctions_from_string
-      |> 
 
 
   end

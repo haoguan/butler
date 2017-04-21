@@ -3,7 +3,6 @@ defmodule Butler.DateParser do
   # Parses: March twenty sixth two thousand seventeen
   def from_string(date_text) do
     date_text
-    |> remove_ands_from_string
   end
 
   # MARK - Month conversions
