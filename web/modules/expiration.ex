@@ -15,12 +15,10 @@ defmodule Butler.Expiration do
   }
 
   def from_relative_string(expiration) do
-    # Pop first word, which should be "in"
     time_components =
-      String.split(expiration)
-      |> List.delete_at(0)
-      |> Enum.join(" ")
-      |> remove_ands_from_string
+      expiration
+      |> remove_conjunctions_from_string
+      # TODO: More robust using regular expressions!
       |> add_split_characters(Map.keys(@time_units), "|")
       |> String.split(["|", "|s"])
       |> Enum.filter(fn element ->
@@ -42,6 +40,12 @@ defmodule Butler.Expiration do
   end
 
   def from_exact_string(expiration) do
+    # Pop first word, which should be "on"
+    exact_time =
+      expiration
+      |> remove_conjunctions_from_string
+      |> 
+
 
   end
 
@@ -49,8 +53,12 @@ defmodule Butler.Expiration do
     expiration.hours != 0 || expiration.minutes != 0 || expiration.seconds != 0
   end
 
-  defp remove_ands_from_string(text) do
-    String.replace(text, " and ", " ")
+  defp remove_conjunctions_from_string(text) do
+    text
+      |> String.replace(" and ", " ")
+      |> String.replace("on ", " ")
+      |> String.replace("in ", " ")
+      |> String.trim
   end
 
   # Add split component to number string for partitioning, keeps all units intact.

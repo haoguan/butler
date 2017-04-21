@@ -1,8 +1,8 @@
-defmodule Butler.NumberTest do
+defmodule Butler.NumberParserTest do
   use Butler.ConnCase
   use ExUnit.Case
 
-  alias Butler.Number
+  alias Butler.NumberParser
 
   test "simple digit words to numbers" do
     %{
@@ -12,7 +12,7 @@ defmodule Butler.NumberTest do
       }
       |>
       Enum.each(fn {word, num} ->
-        assert Number.from_string(to_string(word)) == num
+        assert NumberParser.from_string(to_string(word)) == num
       end)
   end
 
@@ -23,32 +23,32 @@ defmodule Butler.NumberTest do
     }
     |>
     Enum.each(fn {word, num} ->
-      assert Number.from_string(to_string(word)) == num
+      assert NumberParser.from_string(to_string(word)) == num
     end)
   end
 
   test "tens with two components" do
-    assert Number.from_string("twenty five") == 25
+    assert NumberParser.from_string("twenty five") == 25
   end
 
   test "hundreds with three components" do
-    assert Number.from_string("three hundred and sixty eight") == 368
+    assert NumberParser.from_string("three hundred and sixty eight") == 368
   end
 
   test "hundreds with a single component" do
-    assert Number.from_string("eight hundred") == 800
+    assert NumberParser.from_string("eight hundred") == 800
   end
 
   test "thousands with four components" do
-    assert Number.from_string("eight hundred sixty two thousand four hundred ninety one") == 862_491
+    assert NumberParser.from_string("eight hundred sixty two thousand four hundred ninety one") == 862_491
   end
 
   test "millions with five components" do
-    assert Number.from_string("twelve million and two thousand and one") == 12_002_001
+    assert NumberParser.from_string("twelve million and two thousand and one") == 12_002_001
   end
 
   test "thousands with a single component" do
-    assert Number.from_string("one thousand") == 1000
+    assert NumberParser.from_string("one thousand") == 1000
   end
 
 end

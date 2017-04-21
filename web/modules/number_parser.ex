@@ -1,6 +1,6 @@
 alias Butler.Searchable
 
-defmodule Butler.Number do
+defmodule Butler.NumberParser do
   def from_string("zero"), do: 0
   def from_string("one"), do: 1
   def from_string("two"), do: 2
@@ -49,6 +49,11 @@ defmodule Butler.Number do
     Enum.reduce(partitions, 0, fn(partition, acc) ->
       acc + calculate_number_partition(partition)
     end)
+  end
+
+  # Spoken enumeration of a year. e.g. twenty seventeen
+  def from_year(year) do
+
   end
 
   # Add split component to number string for partitioning, keeps all units intact.
