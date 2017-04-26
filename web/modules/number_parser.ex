@@ -1,5 +1,3 @@
-alias Butler.Searchable
-
 defmodule Butler.NumberParser do
   def from_string("zero"), do: 0
   def from_string("one"), do: 1
@@ -51,11 +49,6 @@ defmodule Butler.NumberParser do
     end)
   end
 
-  # Spoken enumeration of a year. e.g. twenty seventeen
-  def from_year(year) do
-
-  end
-
   # Add split component to number string for partitioning, keeps all units intact.
   defp add_split_characters(number_string, patterns, split_character) do
     Enum.reduce(patterns, number_string, fn(pattern, working_string) ->
@@ -67,20 +60,30 @@ defmodule Butler.NumberParser do
   defp calculate_number_partition(partition) do
     components = partition |> String.trim |> String.split
     Enum.reduce(components, 0, fn(component, acc) ->
-        case is_multiply_component(component) do
-          true ->
-            acc * from_string(component)
-          false ->
-            acc + from_string(component)
-        end
+      number = from_string(component)
+      acc_denom = get_denomination(acc)
+      number_denom = get_denomination(number)
+      cond do
+        # EDGE CASE FOR 0 (beginning state) to ensure we start off adding
+        acc_denom < 0 ->
+          acc + number
+        number_denom > acc_denom ->
+          acc * number
+        number_denom < acc_denom ->
+          acc + number
+        number_denom == acc_denom ->
+          Integer.parse(Integer.to_string(acc) <> Integer.to_string(number))
+      end
     end)
+  end
+
+  defp get_denomination(number) when number == 0, do: -1
+  defp get_denomination(number) when number < 10, do: 1
+  defp get_denomination(number) do
+    1 + get_denomination(number / 10)
   end
 
   defp remove_ands_from_string(text) do
     String.replace(text, " and ", " ")
-  end
-
-  defp is_multiply_component(component) do
-    component == "hundred" || Searchable.contains(@large_number_units, component)
   end
 end
