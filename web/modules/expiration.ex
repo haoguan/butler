@@ -26,7 +26,6 @@ defmodule Butler.Expiration do
         element != "s" || String.length(element) > 1
       end)
 
-    # TODO: Error handling for when time unit isn't found in the map
     params = Enum.reduce(time_components, %{}, fn(time_component, working_expiration) ->
       time_component_parts = time_component |> String.trim |> String.split
       time_unit = time_component_parts |> List.last
@@ -37,7 +36,9 @@ defmodule Butler.Expiration do
       computed_time = time_component_without_unit |> NumberParser.from_string
       Map.put(working_expiration, @time_units[time_unit], computed_time)
     end)
-    struct(Butler.Expiration, params)
+
+    # TODO: Error handling for when time unit isn't found in the map
+    {:ok, struct(Butler.Expiration, params)}
   end
 
   def includes_time_components(expiration) do
