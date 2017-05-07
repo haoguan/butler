@@ -1,5 +1,4 @@
 defmodule Butler.NumberParserTest do
-  use Butler.ConnCase
   use ExUnit.Case
 
   alias Butler.NumberParser

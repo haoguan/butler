@@ -4,6 +4,8 @@ defmodule Butler.DateInterpreterTest do
 
   alias Butler.DateInterpreter
 
+  # RELATIVE EXPIRATION
+
   test "future expiration date using days" do
     test_start_date = Timex.to_datetime({2017, 4, 4})
     {:ok, _, relative_expiration} = DateInterpreter.interpret_expiration("in twenty days", test_start_date)
@@ -41,5 +43,9 @@ defmodule Butler.DateInterpreterTest do
     {:ok, _, relative_expiration} = DateInterpreter.interpret_expiration("in fifteen hours and thirty six minutes", test_start_date)
     assert relative_expiration == "in 15 hours, on Wednesday, April 5, 2017 at 2:01AM"
   end
+
+  # EXACT EXPIRATION
+
+  
 
 end

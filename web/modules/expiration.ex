@@ -1,4 +1,5 @@
 alias Butler.NumberParser
+alias Butler.StringEditor
 
 defmodule Butler.Expiration do
   defstruct seconds: 0, minutes: 0, hours: 0, days: 0,
@@ -17,10 +18,10 @@ defmodule Butler.Expiration do
   def from_relative_string(expiration) do
     time_components =
       expiration
-      |> remove_conjunctions_from_string
+      |> StringEditor.sanitize
       # TODO: More robust using regular expressions!
-      |> add_split_characters(Map.keys(@time_units), "|")
-      |> String.split(["|", "|s"])
+      |> StringEditor.add_split_characters(Map.keys(@time_units), "|")
+      |> String.split(["|", "|s"], trim: true)
       |> Enum.filter(fn element ->
         element != "s" || String.length(element) > 1
       end)
@@ -39,31 +40,7 @@ defmodule Butler.Expiration do
     struct(Butler.Expiration, params)
   end
 
-  def from_exact_string(expiration) do
-    # Pop first word, which should be "on"
-    exact_time =
-      expiration
-      |> remove_conjunctions_from_string
-
-
-  end
-
   def includes_time_components(expiration) do
     expiration.hours != 0 || expiration.minutes != 0 || expiration.seconds != 0
-  end
-
-  defp remove_conjunctions_from_string(text) do
-    text
-      |> String.replace(" and ", " ")
-      |> String.replace("on ", " ")
-      |> String.replace("in ", " ")
-      |> String.trim
-  end
-
-  # Add split component to number string for partitioning, keeps all units intact.
-  defp add_split_characters(number_string, patterns, split_character) do
-    Enum.reduce(patterns, number_string, fn(pattern, working_string) ->
-      String.replace(working_string, pattern, pattern <> split_character)
-    end)
   end
 end
