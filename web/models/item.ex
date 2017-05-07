@@ -15,7 +15,7 @@ defmodule Butler.Item do
     field :expiration_string, :string
     belongs_to :user, Butler.User
 
-    timestamps
+    timestamps()
   end
 
   @allowed_fields ~w(item expiration alexa_id)
