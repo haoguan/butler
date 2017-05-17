@@ -1,7 +1,7 @@
 defmodule Butler.Item do
   alias Butler.Item
   alias Butler.User
-  @derive {Poison.Encoder, only: [:id, :user_id, :type, :expiration_date, :expiration_string]}
+  @derive {Poison.Encoder, only: [:id, :user_id, :expiration_date, :expiration_string]}
 
   use Butler.Web, :model
   alias Butler.DateInterpreter
@@ -19,7 +19,7 @@ defmodule Butler.Item do
   end
 
   @allowed_fields ~w(item expiration alexa_id)
-  @required_fields [:item, :type, :expiration_date, :expiration_string, :user_id]
+  @required_fields [:item, :expiration_date, :expiration_string, :user_id]
 
   def registration_changeset(params) do
     setup_changeset(params)
@@ -47,6 +47,7 @@ defmodule Butler.Item do
   end
 
   def expiration_date_changeset(changeset, params) do
+    IO.puts "entered expiration date changeset"
     changeset
     |> interpretExpirationDate
   end
@@ -64,11 +65,13 @@ defmodule Butler.Item do
 
   def convertAlexaIdToUserId(changeset, %{"alexa_id" => alexa_id}) do
     # Should only be one
+    # TODO: Need to create user if user doesn't already exist!
     case Repo.one(User.query_matching_user(alexa_id)) do
       nil ->
         IO.puts "failed to find a user with alexa_id"
         changeset
       user ->
+        IO.puts "successfully fetched alexa id"
         changeset
         |> put_change(:user_id, user.id)
         |> delete_change(:alexa_id)
@@ -100,11 +103,13 @@ defmodule Butler.Item do
         IO.puts "interpretExpirationDate: expiration not found in changeset"
         changeset
       user_expiration ->
+        IO.puts "expiration date exists in changeset"
         case DateInterpreter.interpret_expiration(user_expiration) do
           {:error, invalid_expiration} ->
             IO.puts "interpretExpirationDate: unable to interpret -  " <> invalid_expiration <> "."
             changeset
           {:ok, expiration_date, expiration_string} ->
+            IO.puts "successfully interpreted expiration"
             putExpirationDate(changeset, expiration_date, expiration_string)
         end
     end

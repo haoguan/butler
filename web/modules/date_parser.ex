@@ -1,5 +1,4 @@
-alias Butler.NumberParser
-alias Butler.StringEditor
+alias Butler.{NumberParser, StringEditor}
 
 defmodule Butler.DateParser do
 

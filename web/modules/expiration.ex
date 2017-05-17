@@ -1,5 +1,4 @@
-alias Butler.NumberParser
-alias Butler.StringEditor
+alias Butler.{NumberParser, StringEditor}
 
 defmodule Butler.Expiration do
   defstruct seconds: 0, minutes: 0, hours: 0, days: 0,
@@ -16,6 +15,7 @@ defmodule Butler.Expiration do
   }
 
   def from_relative_string(expiration) do
+    IO.inspect expiration
     time_components =
       expiration
       |> StringEditor.sanitize
@@ -25,6 +25,8 @@ defmodule Butler.Expiration do
       |> Enum.filter(fn element ->
         element != "s" || String.length(element) > 1
       end)
+
+    IO.inspect time_components
 
     params = Enum.reduce(time_components, %{}, fn(time_component, working_expiration) ->
       time_component_parts = time_component |> String.trim |> String.split
@@ -36,6 +38,8 @@ defmodule Butler.Expiration do
       computed_time = time_component_without_unit |> NumberParser.from_string
       Map.put(working_expiration, @time_units[time_unit], computed_time)
     end)
+
+    IO.inspect params
 
     # TODO: Error handling for when time unit isn't found in the map
     {:ok, struct(Butler.Expiration, params)}

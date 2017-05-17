@@ -63,14 +63,19 @@ defmodule Butler.NumberParser do
 
   # General parser from a number text
   def from_string(number) do
-    partitions =
-      number
-      |> remove_ands_from_string
-      |> add_split_characters(@large_number_units, "|")
-      |> String.split("|")
-    Enum.reduce(partitions, 0, fn(partition, acc) ->
-      acc + calculate_number_partition(partition)
-    end)
+    case Integer.parse(number) do
+      {number, _} ->
+        number
+      :error ->
+        partitions =
+          number
+          |> remove_ands_from_string
+          |> add_split_characters(@large_number_units, "|")
+          |> String.split("|")
+        Enum.reduce(partitions, 0, fn(partition, acc) ->
+          acc + calculate_number_partition(partition)
+        end)
+    end
   end
 
   # Add split component to number string for partitioning, keeps all units intact.

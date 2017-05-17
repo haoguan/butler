@@ -1,8 +1,6 @@
 defmodule Butler.DateInterpreter do
   use Timex
-  alias Butler.Expiration
-  alias Butler.DateParser
-  alias Butler.StringEditor
+  alias Butler.{Expiration, DateParser, StringEditor}
 
   @standard_response_format "{WDfull}, {Mfull} {D}, {YYYY}"
   @hours_response_format "{WDfull}, {Mfull} {D}, {YYYY} at {h12}:{m}{AM}"
@@ -14,10 +12,11 @@ defmodule Butler.DateInterpreter do
       nil ->
         IO.puts "interpret_expiration: empty string passed in!"
       "in" ->
-        expiration = user_expiration
+        IO.puts "interpret_expiration: IN Case"
+        {:ok, expiration} = user_expiration
         |> Expiration.from_relative_string
 
-        format = exact_component_format_from_expiration(expiration)
+        format = response_format_from_expiration(expiration)
 
         expiration
         |> exact_date_from_expiration_struct(start_date)
@@ -30,20 +29,27 @@ defmodule Butler.DateInterpreter do
     end
   end
 
-  # Returns exact date from expiration
-  def exact_date_from_expiration_text(expiration) do
-    expiration
-    |> StringEditor.sanitize
-    |> DateParser.from_string
+  defp exact_date_from_expiration_text(expiration) do
+    {:ok, date} =
+      expiration
+      |> StringEditor.sanitize
+      |> DateParser.from_string
+    date
   end
 
   defp exact_date_from_expiration_struct(expiration, start_date) do
+    IO.puts "shifting start date with expiration"
+    IO.inspect start_date
+    IO.inspect expiration
     Timex.shift(start_date, seconds: expiration.seconds,
          minutes: expiration.minutes, hours: expiration.hours, days: expiration.days,
-         months: expiration.months, years: expiration.years)
+         weeks: expiration.weeks, months: expiration.months, years: expiration.years)
   end
 
   defp alexa_response_from_expiration_date(expiration_date, start_date, response_format) do
+    IO.puts "parsing alexa response"
+    IO.inspect expiration_date
+    IO.inspect start_date
     # Ex. in 20 days, on Monday, January 23, 2017
     case Timex.Format.DateTime.Formatters.Relative.relative_to(expiration_date, start_date, "{relative}") do
       {:error, failed_date} ->
@@ -62,7 +68,7 @@ defmodule Butler.DateInterpreter do
     end
   end
 
-  defp exact_component_format_from_expiration(expiration) do
+  defp response_format_from_expiration(expiration) do
     if Expiration.includes_time_components(expiration) do
       @hours_response_format
     else
