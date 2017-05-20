@@ -18,11 +18,11 @@ defmodule Butler.ExpirationTest do
     assert Expiration.from_relative_string("in three months one week") == {:ok, %Expiration{months: 3, weeks: 1}}
   end
 
-  test "relative expiration with component that has multiple number parts" do
+  test "relative expiration with component that has multiple parts" do
     assert Expiration.from_relative_string("in three hundred eighty seven days") == {:ok, %Expiration{days: 387}}
   end
 
-  test "relative expiration with multiple components that has multiple number parts" do
+  test "relative expiration with multiple components that have multiple parts" do
     assert Expiration.from_relative_string("in thirty nine years seventy one days") == {:ok, %Expiration{years: 39, days: 71}}
   end
 
@@ -34,6 +34,18 @@ defmodule Butler.ExpirationTest do
 
   test "relative expiration with different number components" do
     assert Expiration.from_relative_string("in 2 weeks 5 days and 6 hours") == {:ok, %Expiration{weeks: 2, days: 5, hours: 6}}
+  end
+
+  test "relative expiration with number component that isn't plural" do
+    assert Expiration.from_relative_string("in 3 months 1 week") == {:ok, %Expiration{months: 3, weeks: 1}}
+  end
+
+  test "relative expiration with number component that has multiple parts" do
+    assert Expiration.from_relative_string("in 387 days") == {:ok, %Expiration{days: 387}}
+  end
+
+  test "relative expiration with multiple number components that have multiple parts" do
+    assert Expiration.from_relative_string("in 39 years 71 days") == {:ok, %Expiration{years: 39, days: 71}}
   end
 
 end
