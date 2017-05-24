@@ -8,20 +8,20 @@ defmodule Butler.DateInterpreterTest do
 
   test "future relative expiration date using days" do
     test_start_date = Timex.to_datetime({2017, 4, 4})
-    {:ok, _, relative_expiration} = DateInterpreter.interpret_expiration("in twenty days", test_start_date)
+    {:ok, _, relative_expiration} = DateInterpreter.interpret_expiration("in 20 days", test_start_date)
     assert relative_expiration == "in 20 days, on Monday, April 24, 2017"
   end
 
   test "future relative expiration using months and days" do
     test_start_date = Timex.to_datetime({2017, 4, 4})
-    {:ok, _, relative_expiration} = DateInterpreter.interpret_expiration("in three months and twelve days", test_start_date)
+    {:ok, _, relative_expiration} = DateInterpreter.interpret_expiration("in 3 months and twelve days", test_start_date)
     # NOTE: Relative component will only specify the largest unit
     assert relative_expiration == "in 3 months, on Sunday, July 16, 2017"
   end
 
   test "future relative expiration using irregular months and days" do
     test_start_date = Timex.to_datetime({2017, 4, 4})
-    {:ok, _, relative_expiration} = DateInterpreter.interpret_expiration("in three months and zero days", test_start_date)
+    {:ok, _, relative_expiration} = DateInterpreter.interpret_expiration("in three months and 0 days", test_start_date)
     assert relative_expiration == "in 3 months, on Tuesday, July 4, 2017"
   end
 
@@ -34,13 +34,13 @@ defmodule Butler.DateInterpreterTest do
 
   test "future relative expiration shifted by hours that spills into the next day" do
     test_start_date = Timex.to_datetime({{2017, 4, 4}, {10, 25, 0}})
-    {:ok, _, relative_expiration} = DateInterpreter.interpret_expiration("in fifteen hours", test_start_date)
+    {:ok, _, relative_expiration} = DateInterpreter.interpret_expiration("in 15 hours", test_start_date)
     assert relative_expiration == "in 15 hours, on Wednesday, April 5, 2017 at 1:25AM"
   end
 
   test "future relative expiration shifted by hours and minutes that spills into the next day" do
     test_start_date = Timex.to_datetime({{2017, 4, 4}, {10, 25, 0}})
-    {:ok, _, relative_expiration} = DateInterpreter.interpret_expiration("in fifteen hours and thirty six minutes", test_start_date)
+    {:ok, _, relative_expiration} = DateInterpreter.interpret_expiration("in fifteen hours and 36 minutes", test_start_date)
     assert relative_expiration == "in 15 hours, on Wednesday, April 5, 2017 at 2:01AM"
   end
 
@@ -50,26 +50,36 @@ defmodule Butler.DateInterpreterTest do
 
   test "future exact expiration date in one day" do
     test_start_date = Timex.to_datetime({2017, 4, 4})
-    {:ok, _, exact_expiration} = DateInterpreter.interpret_expiration("on April fifth twenty seventeen", test_start_date)
+    {:ok, _, exact_expiration} = DateInterpreter.interpret_expiration("on April 5th, 2017", test_start_date)
     assert exact_expiration == "in 1 day, on Wednesday, April 5, 2017"
   end
 
   test "future exact expiration date within a few days" do
     test_start_date = Timex.to_datetime({2017, 4, 4})
-    {:ok, _, exact_expiration} = DateInterpreter.interpret_expiration("on april Eighth two thousand seventeen", test_start_date)
+    {:ok, _, exact_expiration} = DateInterpreter.interpret_expiration("on april 8th 2017", test_start_date)
     assert exact_expiration == "in 4 days, on Saturday, April 8, 2017"
   end
 
   test "future exact expiration date within weeks" do
     test_start_date = Timex.to_datetime({2017, 4, 4})
-    {:ok, _, exact_expiration} = DateInterpreter.interpret_expiration("on April twenty third twenty seventeen", test_start_date)
+    {:ok, _, exact_expiration} = DateInterpreter.interpret_expiration("on April 23 2017", test_start_date)
     assert exact_expiration == "in 19 days, on Sunday, April 23, 2017"
   end
 
   test "future exact expiration date within a month" do
     test_start_date = Timex.to_datetime({2017, 4, 4})
-    {:ok, _, exact_expiration} = DateInterpreter.interpret_expiration("on May second two thousand and seventeen", test_start_date)
+    {:ok, _, exact_expiration} = DateInterpreter.interpret_expiration("on May 2 2017", test_start_date)
     assert exact_expiration == "in 28 days, on Tuesday, May 2, 2017"
+  end
+
+  test "invalid future exact expiration date containing invalid month" do
+    test_start_date = Timex.to_datetime({2017, 4, 4})
+    assert DateInterpreter.interpret_expiration("on Bogus 2 2017", test_start_date) == {:error, :invalid_month}
+  end
+
+  test "invalid future exact expiration date containing invalid month" do
+    test_start_date = Timex.to_datetime({2017, 4, 4})
+    assert DateInterpreter.interpret_expiration("on Bogus 2 2017", test_start_date) == {:error, :invalid_month}
   end
 
 end

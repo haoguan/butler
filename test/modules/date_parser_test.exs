@@ -1,38 +1,29 @@
 defmodule Butler.DateParserTest do
   use ExUnit.Case
+  use Timex
 
   alias Butler.DateParser
 
-  # Enumerated Year
-
-  test "Date with valid month, single word day, and enumerated year with ascending denomination" do
-    assert DateParser.from_string("December first nine thousand four hundred and three") == {:ok, ~D[9403-12-01]}
+  test "Date with valid month, valid, and future year" do
+    assert DateParser.from_string("December 1st, 9403") == {:ok, Timex.to_datetime({9403, 12, 1})}
   end
 
-  test "Date with valid month, single word day, and enumerated year with descending denomination" do
-    assert DateParser.from_string("january thirtieth three thousand two hundred and eight") == {:ok, ~D[3208-01-30]}
+  test "Date with valid lowercase month, valid day, and future year" do
+    assert DateParser.from_string("january 30th 3208") == {:ok, Timex.to_datetime({3208, 1, 30})}
   end
 
-  test "Date with valid month, single word day, and enumerated year with same denomination" do
-    assert DateParser.from_string("March fifth two thousand sixteen") == {:ok, ~D[2016-03-05]}
+  test "Date with valid month, valid day, and past year" do
+    assert DateParser.from_string("March 5th, 2016") == {:ok, Timex.to_datetime({2016, 3, 5})}
   end
 
-  test "Date with valid month, multiple words day, and enumerated year" do
-    assert DateParser.from_string("september twenty second eight hundred thirty three") == {:ok, ~D[0833-09-22]}
+  # ERROR TESTS
+
+  test "Date with invalid month, valid day, and valid year" do
+    assert DateParser.from_string("Bogus 19th 1999") == {:error, :invalid_month}
   end
 
-  # Brief Year
-
-  test "Date with valid month, single word day, brief year with ascending denomination" do
-    assert DateParser.from_string("December tenth twenty eighteen") == {:ok, ~D[2018-12-10]}
-  end
-
-  test "Date with valid month, single word day, brief year with descending denomination" do
-    assert DateParser.from_string("January thirtieth thirty sixty") == {:ok, ~D[3060-01-30]}
-  end
-
-  test "Date with valid month, single word day, and brief year with same denomination" do
-    assert DateParser.from_string("july Sixteenth twenty twenty") == {:ok, ~D[2020-07-16]}
+  test "Date with valid month, invalid day, and valid year" do
+    assert DateParser.from_string("september 32 3499") == {:error, {:invalid_date, {3499, 9, 32}}}
   end
 
 end
