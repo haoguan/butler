@@ -23,7 +23,7 @@ defmodule Butler.Item do
 
   def registration_changeset(params) do
     setup_changeset(params)
-    |> expiration_date_changeset(params)
+    |> interpretExpiration
     |> validate_changeset
   end
 
@@ -43,13 +43,6 @@ defmodule Butler.Item do
     %Item{}
     |> cast(params, @allowed_fields)
     |> convertAlexaIdToUserId(params)
-    # |> addTermComponents(params)
-  end
-
-  def expiration_date_changeset(changeset, params) do
-    IO.puts "entered expiration date changeset"
-    changeset
-    |> interpretExpirationDate
   end
 
   def validate_changeset(changeset) do
@@ -79,25 +72,7 @@ defmodule Butler.Item do
 
   end
 
-  # def addTermComponents(changeset, %{"item" => item}) do
-  #   interpretation = Classify.interpret_term(item)
-  #   case interpretation do
-  #     %{:type => type, :modifier => modifier} ->
-  #       changeset
-  #       |> put_change(:type, type)
-  #       |> put_change(:modifier, modifier)
-  #     _ ->
-  #       IO.puts "interpretation of term failed"
-  #       changeset
-  #   end
-  # end
-  #
-  # # Error case
-  # def addTermComponents(_changeset, _params) do
-  #   IO.puts "addTermComponents: raw_term not found in params"
-  # end
-
-  def interpretExpirationDate(changeset) do
+  def interpretExpiration(changeset) do
     case get_change(changeset, :expiration) do
       nil ->
         IO.puts "interpretExpirationDate: expiration not found in changeset"
@@ -114,32 +89,6 @@ defmodule Butler.Item do
         end
     end
   end
-
-  # def addExpirationDate(changeset, params) when is_map(params) do
-  #   case params do
-  #     %{"datetime" => datetime} ->
-  #       addExpirationDate(changeset, {:ok, datetime})
-  #     _ ->
-  #       addExpirationDate(changeset, {:ok, Timex.now})
-  #   end
-  # end
-  #
-  # # TODO: Check if current_date is a datetime?
-  # def addExpirationDate(changeset, {:ok, datetime}) do
-  #   case get_change(changeset, :type) do
-  #     nil ->
-  #       IO.puts "addExpirationDate: type cannot be found within changeset"
-  #       changeset
-  #     type ->
-  #       case Classify.expirationDateForItem(type, datetime) do
-  #         {:error, term} ->
-  #           IO.puts "failure to find expirationDate for " <> term <> "."
-  #           changeset
-  #         {:ok, expiration_date, expiration_string} ->
-  #           putExpirationDate(changeset, expiration_date, expiration_string)
-  #       end
-  #   end
-  # end
 
   def putExpirationDate(changeset, expiration_date, expiration_string) do
     changeset

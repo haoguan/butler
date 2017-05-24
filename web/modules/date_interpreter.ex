@@ -30,23 +30,22 @@ defmodule Butler.DateInterpreter do
   end
 
   defp exact_date_from_expiration_text(expiration) do
-    {:ok, date} =
-      expiration
-      |> StringEditor.sanitize
-      |> DateParser.from_string
-    date
+    expiration
+    |> StringEditor.sanitize
+    |> DateParser.from_string
   end
 
   defp exact_date_from_expiration_struct(expiration, start_date) do
     IO.puts "shifting start date with expiration"
     IO.inspect start_date
     IO.inspect expiration
-    Timex.shift(start_date, seconds: expiration.seconds,
+    {:ok, Timex.shift(start_date, seconds: expiration.seconds,
          minutes: expiration.minutes, hours: expiration.hours, days: expiration.days,
-         weeks: expiration.weeks, months: expiration.months, years: expiration.years)
+         weeks: expiration.weeks, months: expiration.months, years: expiration.years)}
   end
 
-  defp alexa_response_from_expiration_date(expiration_date, start_date, response_format) do
+  # TODO: CLEANER ERROR HANDLING
+  defp alexa_response_from_expiration_date({:ok, expiration_date}, start_date, response_format) do
     IO.puts "parsing alexa response"
     IO.inspect expiration_date
     IO.inspect start_date
@@ -66,6 +65,10 @@ defmodule Butler.DateInterpreter do
             {:ok, expiration_date, expiration_string}
         end
     end
+  end
+
+  defp alexa_response_from_expiration_date({:error, _} = error, _, _) do
+    error
   end
 
   defp response_format_from_expiration(expiration) do

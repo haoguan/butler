@@ -1,28 +1,38 @@
 alias Butler.{NumberParser, StringEditor}
+use Timex
 
 defmodule Butler.DateParser do
 
   @month_days [
-    "first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth",
-    "ninth", "tenth", "eleventh", "twelfth", "thirteenth", "fourteenth", "fifteenth",
-    "sixteenth", "seventeenth", "eighteenth", "nineteenth", "twentieth", "thirtieth"
+    "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", "10th",
+    "11th", "12th", "13th", "14th", "15th", "16th", "17th", "18th", "19th", "20th",
+    "21th", "22nd", "23rd", "24th", "25th", "26th", "27th", "28th", "29th", "30th",
+    "31st"
   ]
 
-  # Parses: March twenty sixth twenty seventeen
-  # Parses: March twenty sixth two thousand seventeen
+  # Parses: Alexa gives us format March 26th, 2017
   def from_string(date_text) do
     parsed_month = parse_month(date_text)
     case parsed_month do
       {:ok, month, remaining_text} ->
         {:ok, day, year} = parse_day_and_year(remaining_text)
-        case Date.new(year, month, day) do
-          {:ok, date} ->
-            {:ok, date}
-          {:error, _} ->
-            {:error, {:invalid_date, date_text}}
-        end
+        to_timex_datetime(year, month, day)
       {:error, error} ->
         {:error, error}
+    end
+  end
+
+  defp to_timex_datetime(year, month, day) do
+    try do
+      case Timex.to_datetime({year, month, day}) do
+        {:error, _} ->
+          {:error, {:invalid_date, {year, month, day}}}
+        datetime ->
+          {:ok, datetime}
+      end
+    rescue
+      _ ->
+        {:error, {:invalid_date, {year, month, day}}}
     end
   end
 
@@ -46,8 +56,7 @@ defmodule Butler.DateParser do
     date_components =
       date_text
       |> StringEditor.sanitize
-      |> StringEditor.add_split_characters(@month_days, "|")
-      |> String.split("|")
+      |> String.split
     # IO.inspect date_components
     cond do
       list_size(date_components) != 2 ->
