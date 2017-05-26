@@ -5,9 +5,14 @@ defmodule Butler.DateInterpreter do
   @standard_response_format "{WDfull}, {Mfull} {D}, {YYYY}"
   @hours_response_format "{WDfull}, {Mfull} {D}, {YYYY} at {h12}:{m}{AM}"
 
+  def interpret_expiration(user_expiration, start_date \\ Timex.now)
+  def interpret_expiration(user_expiration, start_date) when is_nil(start_date) do
+    interpret_expiration(user_expiration, Timex.now)
+  end
+
   # Parse expiration from format "in X weeks" or a specified date
   @spec interpret_expiration(String.t, Datetime.t) :: {:ok, Datetime.t, String.t} | {:error, Datetime.t}
-  def interpret_expiration(user_expiration, start_date \\ Timex.now) do
+  def interpret_expiration(user_expiration, start_date) do
     case String.split(user_expiration) |> List.first do
       nil ->
         IO.puts "interpret_expiration: empty string passed in!"

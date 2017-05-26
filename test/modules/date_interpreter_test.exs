@@ -77,9 +77,4 @@ defmodule Butler.DateInterpreterTest do
     assert DateInterpreter.interpret_expiration("on Bogus 2 2017", test_start_date) == {:error, :invalid_month}
   end
 
-  test "invalid future exact expiration date containing invalid month" do
-    test_start_date = Timex.to_datetime({2017, 4, 4})
-    assert DateInterpreter.interpret_expiration("on Bogus 2 2017", test_start_date) == {:error, :invalid_month}
-  end
-
 end

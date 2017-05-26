@@ -1,7 +1,7 @@
 defmodule Butler.Item do
   alias Butler.Item
   alias Butler.User
-  @derive {Poison.Encoder, only: [:id, :user_id, :expiration_date, :expiration_string]}
+  @derive {Poison.Encoder, only: [:id, :user_id, :item, :expiration_date, :expiration_string]}
 
   use Butler.Web, :model
   alias Butler.DateInterpreter
@@ -9,8 +9,8 @@ defmodule Butler.Item do
   schema "items" do
     field :alexa_id, :string, virtual: true
     field :item, :string
-    field :type, :string
     field :expiration, :string, virtual: true
+    field :start_date, :utc_datetime, virtual: true
     field :expiration_date, :utc_datetime
     field :expiration_string, :string
     belongs_to :user, Butler.User
@@ -18,7 +18,7 @@ defmodule Butler.Item do
     timestamps()
   end
 
-  @allowed_fields ~w(item expiration alexa_id)
+  @allowed_fields ~w(item expiration alexa_id start_date)
   @required_fields [:item, :expiration_date, :expiration_string, :user_id]
 
   def registration_changeset(params) do
@@ -73,13 +73,20 @@ defmodule Butler.Item do
   end
 
   def interpretExpiration(changeset) do
+    start_date =
+      with start_date when not is_nil(start_date) <- get_change(changeset, :start_date) do
+        start_date
+      else
+        nil
+      end
+
     case get_change(changeset, :expiration) do
       nil ->
         IO.puts "interpretExpirationDate: expiration not found in changeset"
         changeset
       user_expiration ->
         IO.puts "expiration date exists in changeset"
-        case DateInterpreter.interpret_expiration(user_expiration) do
+        case DateInterpreter.interpret_expiration(user_expiration, start_date) do
           {:error, invalid_expiration} ->
             IO.puts "interpretExpirationDate: unable to interpret -  " <> invalid_expiration <> "."
             changeset
@@ -108,10 +115,10 @@ defmodule Butler.Item do
     select: i
   end
 
-  def query_user_items_by_type(alexa_id, type, modifier) do
+  def query_user_items_by_item_name(alexa_id, name) do
     user_items = query_user_items(alexa_id)
     from i in user_items,
-    where: i.type == ^type and i.modifier == ^modifier
+    where: i.item == ^name
   end
 
   # TODO: Dynamic interval depending on category!
@@ -134,7 +141,7 @@ defmodule Butler.Item do
   ##############
 
   def extract_key_fields(item) do
-    %{id: item.id, type: item.type, modifier: item.modifier}
+    %{id: item.id, item: item.item}
   end
 
   def compare_item_arrays(items1, items2) do

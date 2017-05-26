@@ -5,14 +5,8 @@ defmodule Butler.API.V1.ItemController do
 
   # GET /items with term
   def index(conn, %{"alexa_id" => alexa_id, "item" => item}) do
-    interpretation = Classify.interpret_term(item)
-    case interpretation do
-      %{:type => type, :modifier => modifier} ->
-        query = Item.query_user_items_by_type(alexa_id, type, modifier)
-        ResponseController.render_data(conn, Repo.all(query))
-      _ ->
-        ResponseController.render_data(conn, [], "Unable to parse input item")
-    end
+    query = Item.query_user_items_by_item_name(alexa_id, item)
+    ResponseController.render_data(conn, Repo.all(query))
   end
 
   # GET /items in bulk that need attention soon
@@ -43,6 +37,17 @@ defmodule Butler.API.V1.ItemController do
           %{description: Enum.join(["Item: ", id]) <> " not found"})
       user ->
         ResponseController.render_data(conn, user)
+    end
+  end
+
+  # POST /items - testing with start date injection
+  def create(conn, params = %{"alexa_id" => _, "item" => _, "expiration" => _, "start_date" => _}) do
+    changeset = Item.registration_changeset(params)
+    case Repo.insert(changeset) do
+      {:ok, item} ->
+        ResponseController.render_created(conn, item, "Item successfully created")
+      {:error, changeset} ->
+        ResponseController.changeset_error(conn, changeset)
     end
   end
 
