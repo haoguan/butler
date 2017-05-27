@@ -121,11 +121,26 @@ defmodule Butler.Item do
     where: i.item == ^name
   end
 
-  # TODO: Dynamic interval depending on category!
+  # PRIMARILY FOR TESTING
+  def query_user_items_within_expiration_interval(alexa_id, start_date) do
+    user_items = query_user_items(alexa_id)
+    from i in user_items,
+    where: fragment("? >= now() AND ? - ? <= interval '2 weeks'", i.expiration_date, i.expiration_date, ^start_date),
+    order_by: i.expiration_date
+  end
+
   def query_user_items_within_expiration_interval(alexa_id) do
     user_items = query_user_items(alexa_id)
     from i in user_items,
     where: fragment("? >= now() AND ? - now() <= interval '2 weeks'", i.expiration_date, i.expiration_date),
+    order_by: i.expiration_date
+  end
+
+  # PRIMARILY FOR TESTING
+  def query_expired_user_items(alexa_id, start_date) do
+    user_items = query_user_items(alexa_id)
+    from i in user_items,
+    where: fragment("? - ? > interval '1 second'", ^start_date, i.expiration_date),
     order_by: i.expiration_date
   end
 

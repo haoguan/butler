@@ -24,8 +24,9 @@ defmodule Butler.ItemControllerTest do
   test "POST api/v1/items?alexa_id=&item=&expiration= with relative date" do
     mock_user = insert_mock_user()
     registered_item = "ketchup"
+    start_date = Timex.to_datetime({2017, 5, 26})
     conn = post build_conn(), "api/v1/items/", [alexa_id: mock_user.alexa_id, item: registered_item,
-      expiration: "in 3 weeks", start_date: Timex.to_datetime({2017, 5, 26})]
+      expiration: "in 3 weeks", start_date: start_date]
     %{"description" => description, "status" => status,
       "data" => %{"id" => _, "item" => item,
       "expiration_date" => expiration_date, "expiration_string" => _}} = json_response(conn, 201)
@@ -41,6 +42,40 @@ defmodule Butler.ItemControllerTest do
   # STATUS #
   ##########
 
+  test "GET api/v1/items?alexa_id=&status=" do
+    start_date = Timex.to_datetime({2017, 5, 26})
+    five_days_expiration = Timex.to_datetime({2017, 5, 31})
+    two_weeks_expiration = Timex.to_datetime({2017, 6, 9})
+    one_month_expiration = Timex.to_datetime({2017, 6, 26})
+    passed_expiration = Timex.to_datetime({2017, 5, 25})
+    %{user: user1, items: user1_items} = setup_users([
+      %{id: "amzn1.test.user1.id", items: [%TestItem{name: "sweet ketchup from safeway", expiration_date: two_weeks_expiration},
+                                           %TestItem{name: "room blinds near window", expiration_date: one_month_expiration},
+                                           %TestItem{name: "evaporated milk", expiration_date: five_days_expiration},
+                                           %TestItem{name: "blue cheese", expiration_date: passed_expiration}]},
+      %{id: "amzn1.test.user2.id", items: [%TestItem{name: "jack cheese from trader's joe", expiration_date: two_weeks_expiration},
+                                           %TestItem{name: "rib leftovers", expiration_date: one_month_expiration}]}
+    ])
+    |> List.first
+
+    conn = get build_conn(), "api/v1/items", [alexa_id: user1.alexa_id, status: 1, start_date: start_date]
+
+    %{"description" => description, "status" => status,
+      "data" => response} = json_response(conn, 200)
+    assert status == 200
+    assert description == "Operation successfully completed"
+    # Assert response data items contains expected warning and expired items
+    expired_items = user1_items |> Enum.filter(fn item ->
+      item.item == "blue cheese"
+    end)
+    warning_items = user1_items |> Enum.filter(fn item ->
+      item.item == "sweet ketchup from safeway" || item.item== "evaporated milk"
+    end)
+
+    assert is_items_match_response_for_key(expired_items, response, "expired_items")
+    assert is_items_match_response_for_key(warning_items, response, "warning_items")
+
+  end
 
   #######
   # GET #
@@ -69,38 +104,4 @@ defmodule Butler.ItemControllerTest do
     end)
     assert Enum.empty?(unexpected_item)
   end
-
-  # test "GET api/v1/items&alexa_id=&status=1 reminder within default 2 weeks" do
-  #   # Fuzzy two weeks because of potential calculation errors
-  #   two_weeks_expiration = Timex.shift(Timex.now, minutes: 58, hours: 10, days: 6, weeks: 1)
-  #   five_days_expiration = Timex.shift(Timex.now, days: 5)
-  #   one_month_expiration = Timex.shift(Timex.now, months: 1)
-  #   already_passed_expiration = Timex.shift(Timex.now, days: -1)
-  #   %{user: user1, items: user1_items} = setup_users([
-  #     %{id: "amzn1.test.user1.id", items: [%TestItem{name: "sweet ketchup from safeway", expiration_date: two_weeks_expiration},
-  #                                          %TestItem{name: "room blinds near window", expiration_date: one_month_expiration},
-  #                                          %TestItem{name: "evaporated milk", expiration_date: five_days_expiration},
-  #                                          %TestItem{name: "blue cheese", expiration_date: already_passed_expiration}]},
-  #     %{id: "amzn1.test.user2.id", items: [%TestItem{name: "jack cheese from trader's joe", expiration_date: two_weeks_expiration},
-  #                                          %TestItem{name: "rib leftovers", expiration_date: one_month_expiration}]}
-  #   ])
-  #   |> List.first
-  #
-  #   conn = get build_conn(), "api/v1/items", [alexa_id: user1.alexa_id, status: 1]
-  #   %{"description" => description, "status" => status,
-  #     "data" => response} = json_response(conn, 200)
-  #   assert status == 200
-  #   assert description == "Operation successfully completed"
-  #   # Assert response data items contains expected warning and expired items
-  #   expired_items = user1_items |> Enum.filter(fn item ->
-  #     (item.type == "cheese" && item.modifier == "blue")
-  #   end)
-  #   warning_items = user1_items |> Enum.filter(fn item ->
-  #     (item.type == "ketchup" && item.modifier == "sweet") || (item.type == "milk" && item.modifier == "evaporated")
-  #   end)
-  #
-  #   assert is_items_match_response_for_key(expired_items, response, "expired_items")
-  #   assert is_items_match_response_for_key(warning_items, response, "warning_items")
-  # end
-
 end
