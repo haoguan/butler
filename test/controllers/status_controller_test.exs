@@ -40,4 +40,16 @@ defmodule Butler.StatusControllerTest do
     assert is_items_match_response_for_key(expired_items, response, "expired_items")
     assert is_items_match_response_for_key(warning_items, response, "warning_items")
   end
+
+  test "GET api/v1/status?alexa_id= with no items", context do
+    conn = get build_conn(), "api/v1/status", [alexa_id: "random user id", start_date: @start]
+
+    %{"description" => description, "status" => status,
+      "data" => response} = json_response(conn, 200)
+
+    assert status == 200
+    assert description == "Operation successfully completed"
+    assert is_items_match_response_for_key([], response, "expired_items")
+    assert is_items_match_response_for_key([], response, "warning_items")
+  end
 end
