@@ -19,5 +19,6 @@ defmodule Butler.Router do
 
     resources "/users", UserController, only: [:index, :show, :create]
     resources "/items", ItemController, only: [:index, :show, :create]
+    resources "/status", StatusController, only: [:index]
   end
 end
