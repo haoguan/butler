@@ -104,4 +104,18 @@ defmodule Butler.ItemControllerTest do
     end)
     assert Enum.empty?(unexpected_item)
   end
+
+  test "GET api/v1/items&alexa_id=&item= for item that doesn't exist" do
+    %{user: user1, items: user1_items} = setup_users([
+      %{id: "amzn1.test.user1.id", items: [%TestItem{name: "sweet ketchup from safeway"}, %TestItem{name: "room blinds"}, %TestItem{name: "evaporated milk"}]},
+      %{id: "amzn1.test.user2.id", items: [%TestItem{name: "jack cheese from trader's joe"}, %TestItem{name: "rib leftovers"}]}
+    ])
+    |> List.first
+
+    query_item = "nonexistent sauce"
+    conn = get build_conn(), "api/v1/items", [alexa_id: user1.alexa_id, item: query_item]
+    %{"description" => description, "status" => status} = json_response(conn, 404)
+    assert status == 404
+    assert description ==  query_item <> ": is not found"
+  end
 end

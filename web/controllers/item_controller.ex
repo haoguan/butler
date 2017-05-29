@@ -6,7 +6,15 @@ defmodule Butler.API.V1.ItemController do
   # GET /items with term
   def index(conn, %{"alexa_id" => alexa_id, "item" => item}) do
     query = Item.query_user_items_by_item_name(alexa_id, item)
-    ResponseController.render_data(conn, Repo.all(query))
+    try do
+      found_item = Repo.one!(query)
+      ResponseController.render_data(conn, found_item)
+    rescue
+      Ecto.NoResultsError ->
+        ResponseController.not_found(conn, item <> ": is not found")
+      Ecto.MultipleResultsError ->
+        ResponseController.not_found(conn, item <> ": is found multiple times")
+    end
   end
 
   def index(conn, %{"alexa_id" => alexa_id, "status" => _, "start_date" => start_date} = params) do
