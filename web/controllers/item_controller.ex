@@ -13,7 +13,7 @@ defmodule Butler.API.V1.ItemController do
       Ecto.NoResultsError ->
         ResponseController.not_found(conn, item <> ": is not found")
       Ecto.MultipleResultsError ->
-        ResponseController.not_found(conn, item <> ": is found multiple times")
+        ResponseController.not_found(conn, item <> ": has multiple copies")
     end
   end
 

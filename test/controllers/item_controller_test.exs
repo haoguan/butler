@@ -118,4 +118,18 @@ defmodule Butler.ItemControllerTest do
     assert status == 404
     assert description ==  query_item <> ": is not found"
   end
+
+  test "GET api/v1/items&alexa_id=&item= for item that has multiple copies" do
+    %{user: user1, items: user1_items} = setup_users([
+      %{id: "amzn1.test.user1.id", items: [%TestItem{name: "evaporated milk"}, %TestItem{name: "room blinds"}, %TestItem{name: "evaporated milk"}]},
+      %{id: "amzn1.test.user2.id", items: [%TestItem{name: "jack cheese from trader's joe"}, %TestItem{name: "rib leftovers"}]}
+    ])
+    |> List.first
+
+    query_item = "evaporated milk"
+    conn = get build_conn(), "api/v1/items", [alexa_id: user1.alexa_id, item: query_item]
+    %{"description" => description, "status" => status} = json_response(conn, 404)
+    assert status == 404
+    assert description ==  query_item <> ": has multiple copies"
+  end
 end
