@@ -93,4 +93,28 @@ defmodule Butler.ItemControllerTest do
     assert status == 404
     assert description ==  query_item <> ": has multiple copies"
   end
+
+  ##########
+  # DELETE #
+  ##########
+
+  test "DELETE api/v1/items/complete&alexa_id=&item=" do
+    %{user: user1, items: user1_items} = setup_users([
+      %{id: "amzn1.test.user1.id", items: [%TestItem{name: "sweet ketchup from safeway"}, %TestItem{name: "room blinds"}, %TestItem{name: "evaporated milk"}]},
+      %{id: "amzn1.test.user2.id", items: [%TestItem{name: "jack cheese from trader's joe"}, %TestItem{name: "rib leftovers"}]}
+    ])
+    |> List.first
+
+    query_item = "evaporated milk"
+    conn = delete build_conn(), "api/v1/items/complete", [alexa_id: user1.alexa_id, item: query_item]
+    %{"description" => description, "status" => status, "data" => response} = json_response(conn, 200)
+    assert status == 200
+    assert description ==  "Item successfully deleted"
+
+    # Assert response data items contains expected items
+    expected_item = user1_items |> Enum.filter(fn item ->
+      item.item == query_item
+    end)
+    assert is_items_match_response(expected_item, response)
+  end
 end
