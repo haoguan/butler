@@ -125,7 +125,7 @@ defmodule Butler.Item do
   def query_user_items_within_expiration_interval(alexa_id, start_date) do
     user_items = query_user_items(alexa_id)
     from i in user_items,
-    where: fragment("? >= now() AND ? - ? <= interval '2 weeks'", i.expiration_date, i.expiration_date, ^start_date),
+    where: fragment("? >= ? AND ? - ? <= interval '2 weeks'", i.expiration_date, ^start_date, i.expiration_date, ^start_date),
     order_by: i.expiration_date
   end
 
