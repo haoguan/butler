@@ -1,5 +1,5 @@
 defmodule TestItem do
-  defstruct name: "", expiration_date: Timex.now, expiration_string: "relative expiration"
+  defstruct name: "", expiration_date: Timex.now, expiration_string: "test expiration"
 end
 
 defmodule Butler.TestUtils do

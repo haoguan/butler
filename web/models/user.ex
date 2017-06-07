@@ -8,7 +8,7 @@ defmodule Butler.User do
     field :alexa_id, :string
     has_many :items, Butler.Item
 
-    timestamps
+    timestamps()
   end
 
   @allowed_fields ~w(alexa_id)
