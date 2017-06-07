@@ -74,7 +74,7 @@ defmodule Butler.Classify do
   }
 
   # @spec expirationDateForItem(String.t, DateTime.t) :: DateTime.t | {:error, String.t}
-  def expirationDateForItem(item, start_date \\ Timex.now()) do
+  def expirationDateForItem(item, start_date \\ Timex.now) do
     item_atom = String.to_atom(item)
     # Using subscript notation will return nil for non-existing key
     # Using dot notation will throw KeyError instead
@@ -97,7 +97,7 @@ defmodule Butler.Classify do
           {:ok, relative_component} ->
             case Timex.format(expiration_date, "{WDfull}, {Mfull} {D}, {YYYY}") do
               {:error, term} ->
-                IO.puts item <> " FULLL could not be found in list"
+                IO.puts item <> " could not be found in list"
                 {:error, item}
               {:ok, full_component} ->
                 expiration_string = Enum.join([relative_component, full_component], ", on ")
@@ -107,19 +107,19 @@ defmodule Butler.Classify do
     end
   end
 
-  def interpret_term(raw_term) do
-    # Find index of the type in words list
-    words = raw_term |> String.split(" ", trim: true)
-    type_index = words |> Enum.find_index(fn word ->
-      Map.has_key?(@itemExpirations, String.to_atom(word))
-    end)
-
-    # Skip error check because index already verified
-    {:ok, type} = words |> Enum.fetch(type_index)
-
-    # TODO: Handle complex expressions like "Angelina's bedsheets in the room"
-    # Ignore words after the type has been identified
-    modifier = words |> Enum.take(type_index) |> Enum.join(" ")
-    %{:type => type, :modifier => modifier}
-  end
+  # def interpret_term(raw_term) do
+  #   # Find index of the type in words list
+  #   words = raw_term |> String.split(" ", trim: true)
+  #   type_index = words |> Enum.find_index(fn word ->
+  #     Map.has_key?(@itemExpirations, String.to_atom(word))
+  #   end)
+  #
+  #   # Skip error check because index already verified
+  #   {:ok, type} = words |> Enum.fetch(type_index)
+  #
+  #   # TODO: Handle complex expressions like "Angelina's bedsheets in the room"
+  #   # Ignore words after the type has been identified
+  #   modifier = words |> Enum.take(type_index) |> Enum.join(" ")
+  #   %{:type => type, :modifier => modifier}
+  # end
 end

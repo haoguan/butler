@@ -1,38 +1,55 @@
 defmodule Butler.Item do
   alias Butler.Item
   alias Butler.User
-  @derive {Poison.Encoder, only: [:id, :type, :modifier, :expiration_date, :expiration_string]}
+  @derive {Poison.Encoder, only: [:id, :user_id, :item, :expiration_date, :expiration_string]}
 
   use Butler.Web, :model
-  alias Butler.Classify
+  alias Butler.DateInterpreter
 
-  # TODO: Support items with generic modifiers
-  # e.g. kitchen towel, Angelina's toothbrush
   schema "items" do
     field :alexa_id, :string, virtual: true
-    field :item, :string, virtual: true
-
-    field :type, :string
-    field :modifier, :string
+    field :item, :string
+    field :expiration, :string, virtual: true
+    field :start_date, :utc_datetime, virtual: true
     field :expiration_date, :utc_datetime
     field :expiration_string, :string
     belongs_to :user, Butler.User
 
-    timestamps
+    timestamps()
   end
 
-  @allowed_fields ~w(item alexa_id)
-  @required_fields [:type, :expiration_date, :expiration_string, :user_id]
+  @allowed_fields ~w(item expiration alexa_id start_date)
+  @required_fields [:item, :expiration_date, :expiration_string, :user_id]
 
   def registration_changeset(params) do
+    setup_changeset(params)
+    |> interpretExpiration
+    |> validate_changeset
+  end
+
+  # TODO: Consolidate this changeset by using the same relative date interpretation method
+  def test_registration_changeset(params, %{"expiration_date" => expiration_date, "expiration_string" => expiration_string}) do
+    setup_changeset(params)
+    # TODO: Require expiration string for testing too
+    |> putExpirationDate(expiration_date, expiration_string)
+    |> validate_changeset
+  end
+
+  ########################
+  # CHANGESET COMPONENTS #
+  ########################
+
+  def setup_changeset(params) do
     %Item{}
     |> cast(params, @allowed_fields)
     |> convertAlexaIdToUserId(params)
-    |> addTermComponents(params)
-    |> addExpirationDate
+  end
+
+  def validate_changeset(changeset) do
+    changeset
     |> validate_required(@required_fields)
     |> foreign_key_constraint(:user_id)
-    |> unique_constraint(:user_id, name: :items_type_modifier_user_id_index)
+    |> unique_constraint(:user_id, name: :items_type_item_user_id_index)
   end
 
   ###########
@@ -41,11 +58,13 @@ defmodule Butler.Item do
 
   def convertAlexaIdToUserId(changeset, %{"alexa_id" => alexa_id}) do
     # Should only be one
+    # TODO: Need to create user if user doesn't already exist!
     case Repo.one(User.query_matching_user(alexa_id)) do
       nil ->
         IO.puts "failed to find a user with alexa_id"
         changeset
       user ->
+        IO.puts "successfully fetched alexa id"
         changeset
         |> put_change(:user_id, user.id)
         |> delete_change(:alexa_id)
@@ -53,40 +72,35 @@ defmodule Butler.Item do
 
   end
 
-  def addTermComponents(changeset, %{"item" => item}) do
-    interpretation = Classify.interpret_term(item)
-    case interpretation do
-      %{:type => type, :modifier => modifier} ->
-        changeset
-        |> put_change(:type, type)
-        |> put_change(:modifier, modifier)
-      _ ->
-        IO.puts "interpretation of term failed"
-        changeset
-    end
-  end
+  def interpretExpiration(changeset) do
+    start_date =
+      with start_date when not is_nil(start_date) <- get_change(changeset, :start_date) do
+        start_date
+      else
+        nil
+      end
 
-  # Error case
-  def addTermComponents(_changeset, _params) do
-    IO.puts "addTermComponents: raw_term not found in params"
-  end
-
-  def addExpirationDate(changeset) do
-    case get_change(changeset, :type) do
+    case get_change(changeset, :expiration) do
       nil ->
-        IO.puts "addExpirationDate: type cannot be found within changeset"
+        IO.puts "interpretExpirationDate: expiration not found in changeset"
         changeset
-      type ->
-        case Classify.expirationDateForItem(type) do
-          {:error, term} ->
-            IO.puts "failure to find expirationDate for " <> term <> "."
+      user_expiration ->
+        IO.puts "expiration date exists in changeset"
+        case DateInterpreter.interpret_expiration(user_expiration, start_date) do
+          {:error, invalid_expiration} ->
+            IO.puts "interpretExpirationDate: unable to interpret -  " <> invalid_expiration <> "."
             changeset
           {:ok, expiration_date, expiration_string} ->
-            changeset
-            |> put_change(:expiration_date, expiration_date)
-            |> put_change(:expiration_string, expiration_string)
+            IO.puts "successfully interpreted expiration"
+            putExpirationDate(changeset, expiration_date, expiration_string)
         end
     end
+  end
+
+  def putExpirationDate(changeset, expiration_date, expiration_string) do
+    changeset
+    |> put_change(:expiration_date, expiration_date)
+    |> put_change(:expiration_string, expiration_string)
   end
 
   ###########
@@ -101,10 +115,40 @@ defmodule Butler.Item do
     select: i
   end
 
-  def query_user_items_by_type(alexa_id, type, modifier) do
+  def query_user_items_by_item_name(alexa_id, name) do
     user_items = query_user_items(alexa_id)
     from i in user_items,
-    where: i.type == ^type and i.modifier == ^modifier
+    where: i.item == ^name
+  end
+
+  # PRIMARILY FOR TESTING
+  def query_user_items_within_expiration_interval(alexa_id, start_date) do
+    user_items = query_user_items(alexa_id)
+    from i in user_items,
+    where: fragment("? >= ? AND ? - ? <= interval '2 weeks'", i.expiration_date, ^start_date, i.expiration_date, ^start_date),
+    order_by: i.expiration_date
+  end
+
+  def query_user_items_within_expiration_interval(alexa_id) do
+    user_items = query_user_items(alexa_id)
+    from i in user_items,
+    where: fragment("? >= now() AND ? - now() <= interval '2 weeks'", i.expiration_date, i.expiration_date),
+    order_by: i.expiration_date
+  end
+
+  # PRIMARILY FOR TESTING
+  def query_expired_user_items(alexa_id, start_date) do
+    user_items = query_user_items(alexa_id)
+    from i in user_items,
+    where: fragment("? - ? > interval '1 second'", ^start_date, i.expiration_date),
+    order_by: i.expiration_date
+  end
+
+  def query_expired_user_items(alexa_id) do
+    user_items = query_user_items(alexa_id)
+    from i in user_items,
+    where: fragment("now() - ? > interval '1 second'", i.expiration_date),
+    order_by: i.expiration_date
   end
 
   ##############
@@ -112,7 +156,7 @@ defmodule Butler.Item do
   ##############
 
   def extract_key_fields(item) do
-    %{id: item.id, type: item.type, modifier: item.modifier}
+    %{id: item.id, item: item.item}
   end
 
   def compare_item_arrays(items1, items2) do

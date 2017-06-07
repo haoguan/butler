@@ -2,66 +2,50 @@ defmodule Butler.ItemControllerTest do
   use Butler.ConnCase
   use Timex
 
-  test "POST api/v1/items?alexa_id=&item=" do
-    mock_user = insert_mock_user("amzn1.test.setupuser.id")
-    conn = post build_conn(), "api/v1/items/", [alexa_id: mock_user.alexa_id, item: "kitchen towels"]
+  ##########
+  # CREATE #
+  ##########
+
+  test "POST api/v1/items?alexa_id=&item=&expiration= with exact date" do
+    mock_user = insert_mock_user()
+    registered_item = "bedsheets"
+    conn = post build_conn(), "api/v1/items/", [alexa_id: mock_user.alexa_id, item: registered_item, expiration: "on June 24th, 2025"]
     %{"description" => description, "status" => status,
-      "data" => %{"id" => _, "type" => type, "modifier" => modifier,
+      "data" => %{"id" => _, "item" => item,
       "expiration_date" => expiration_date, "expiration_string" => _}} = json_response(conn, 201)
 
     {:ok, expiration} = convert_ISO_to_Timex(expiration_date)
     assert status == 201
     assert description == "Item successfully created"
-    assert type == "towels"
-    assert modifier == "kitchen"
-    # TODO: Can't match expiration string b/c remaining days depends on month, e.g. Feb has fewer days!
-    # assert String.contains?(expiration_string, "in 30 days")
-
-    # negative if first datetime occurs before second
-    assert Timex.diff(Timex.now(), expiration, :months) == -1
+    assert item == registered_item
+    assert expiration == Timex.to_datetime({2025, 6, 24})
   end
 
-  test "POST api/v1/items?alexa_id=&item= with no modifiers" do
-    mock_user = insert_mock_user("amzn1.test.setupuser.id")
-    conn = post build_conn(), "api/v1/items/", [alexa_id: mock_user.alexa_id, item: "bedsheets"]
+  test "POST api/v1/items?alexa_id=&item=&expiration= with relative date" do
+    mock_user = insert_mock_user()
+    registered_item = "ketchup"
+    start_date = Timex.to_datetime({2017, 5, 26})
+    conn = post build_conn(), "api/v1/items/", [alexa_id: mock_user.alexa_id, item: registered_item,
+      expiration: "in 3 weeks", start_date: start_date]
     %{"description" => description, "status" => status,
-      "data" => %{"id" => _, "type" => type, "modifier" => modifier,
+      "data" => %{"id" => _, "item" => item,
       "expiration_date" => expiration_date, "expiration_string" => _}} = json_response(conn, 201)
 
     {:ok, expiration} = convert_ISO_to_Timex(expiration_date)
     assert status == 201
     assert description == "Item successfully created"
-    assert type == "bedsheets"
-    # TODO: Should this be empty string or nil if modifier doesn't exist?
-    assert modifier == ""
-
-    # negative if first datetime occurs before second
-    assert Timex.diff(Timex.now(), expiration, :months) == -1
+    assert item == registered_item
+    assert expiration == Timex.to_datetime({2017, 6, 16})
   end
 
-  test "POST api/v1/items?alexa_id=&item= with trailing words" do
-    mock_user = insert_mock_user("amzn1.test.setupuser.id")
-    conn = post build_conn(), "api/v1/items/", [alexa_id: mock_user.alexa_id, item: "Angelina's clarisonic for shower"]
-    %{"description" => description, "status" => status,
-      "data" => %{"id" => _, "type" => type, "modifier" => modifier,
-      "expiration_date" => expiration_date, "expiration_string" => expiration_string}} = json_response(conn, 201)
-
-    {:ok, expiration} = convert_ISO_to_Timex(expiration_date)
-    assert status == 201
-    assert description == "Item successfully created"
-    assert type == "clarisonic"
-    assert modifier == "Angelina's"
-    # TODO: Can't match full string b/c dates are dynamic!!
-    assert String.contains?(expiration_string, "in 2 months")
-
-    # negative if first datetime occurs before second
-    assert Timex.diff(Timex.now(), expiration, :months) == -3
-  end
+  #######
+  # GET #
+  #######
 
   test "GET api/v1/items&alexa_id=&item=" do
     %{user: user1, items: user1_items} = setup_users([
-      %{id: "amzn1.test.user1.id", items: ["sweet ketchup from safeway", "room blinds near window", "evaporated milk"]},
-      %{id: "amzn1.test.user2.id", items: ["jack cheese from trader's joe", "rib leftovers"]}
+      %{id: "amzn1.test.user1.id", items: [%TestItem{name: "sweet ketchup from safeway"}, %TestItem{name: "room blinds"}, %TestItem{name: "evaporated milk"}]},
+      %{id: "amzn1.test.user2.id", items: [%TestItem{name: "jack cheese from trader's joe"}, %TestItem{name: "rib leftovers"}]}
     ])
     |> List.first
 
@@ -71,10 +55,66 @@ defmodule Butler.ItemControllerTest do
     assert status == 200
     assert description == "Operation successfully completed"
     # Assert response data items contains expected items
-    expectedItem = user1_items |> Enum.filter(fn item ->
-      item.type == "blinds" && item.modifier == "room"
+    expected_item = user1_items |> Enum.filter(fn item ->
+      item.item == "room blinds"
     end)
-    assert is_items_match_response(expectedItem, response)
+    assert is_items_match_response(expected_item, response)
+
+    unexpected_item = user1_items |> Enum.filter(fn item ->
+      item.item == "rib leftovers"
+    end)
+    assert Enum.empty?(unexpected_item)
   end
 
+  test "GET api/v1/items&alexa_id=&item= for item that doesn't exist" do
+    %{user: user1, items: user1_items} = setup_users([
+      %{id: "amzn1.test.user1.id", items: [%TestItem{name: "sweet ketchup from safeway"}, %TestItem{name: "room blinds"}, %TestItem{name: "evaporated milk"}]},
+      %{id: "amzn1.test.user2.id", items: [%TestItem{name: "jack cheese from trader's joe"}, %TestItem{name: "rib leftovers"}]}
+    ])
+    |> List.first
+
+    query_item = "nonexistent sauce"
+    conn = get build_conn(), "api/v1/items", [alexa_id: user1.alexa_id, item: query_item]
+    %{"description" => description, "status" => status} = json_response(conn, 404)
+    assert status == 404
+    assert description ==  query_item <> ": is not found"
+  end
+
+  test "GET api/v1/items&alexa_id=&item= for item that has multiple copies" do
+    %{user: user1, items: user1_items} = setup_users([
+      %{id: "amzn1.test.user1.id", items: [%TestItem{name: "evaporated milk"}, %TestItem{name: "room blinds"}, %TestItem{name: "evaporated milk"}]},
+      %{id: "amzn1.test.user2.id", items: [%TestItem{name: "jack cheese from trader's joe"}, %TestItem{name: "rib leftovers"}]}
+    ])
+    |> List.first
+
+    query_item = "evaporated milk"
+    conn = get build_conn(), "api/v1/items", [alexa_id: user1.alexa_id, item: query_item]
+    %{"description" => description, "status" => status} = json_response(conn, 404)
+    assert status == 404
+    assert description ==  query_item <> ": has multiple copies"
+  end
+
+  ##########
+  # DELETE #
+  ##########
+
+  test "DELETE api/v1/items/complete&alexa_id=&item=" do
+    %{user: user1, items: user1_items} = setup_users([
+      %{id: "amzn1.test.user1.id", items: [%TestItem{name: "sweet ketchup from safeway"}, %TestItem{name: "room blinds"}, %TestItem{name: "evaporated milk"}]},
+      %{id: "amzn1.test.user2.id", items: [%TestItem{name: "jack cheese from trader's joe"}, %TestItem{name: "rib leftovers"}]}
+    ])
+    |> List.first
+
+    query_item = "evaporated milk"
+    conn = delete build_conn(), "api/v1/items/complete", [alexa_id: user1.alexa_id, item: query_item]
+    %{"description" => description, "status" => status, "data" => response} = json_response(conn, 200)
+    assert status == 200
+    assert description ==  "Item successfully deleted"
+
+    # Assert response data items contains expected items
+    expected_item = user1_items |> Enum.filter(fn item ->
+      item.item == query_item
+    end)
+    assert is_items_match_response(expected_item, response)
+  end
 end
